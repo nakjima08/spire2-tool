@@ -81,6 +81,14 @@
       border-color: #63b3ff;
     }
 
+    #tagClear {
+      background: #552222;
+      border-color: #aa4444;
+    }
+    #tagClear:hover {
+      background: #773333;
+    }
+
     .tag-filter-wrapper {
       margin-bottom: 10px;
       border-radius: 8px;
@@ -212,6 +220,7 @@
 </head>
 
 <body>
+
 <div id="lastUpdate"></div>
 
 <h1>📘 カード図鑑</h1>
@@ -229,9 +238,8 @@
 <div id="tagModeSwitch">
   <button id="modeAnd" class="mode-btn active">AND</button>
   <button id="modeOr" class="mode-btn">OR</button>
-  <button id="tagClear" class="mode-btn" style="background:#552222;">クリア</button>
+  <button id="tagClear" class="mode-btn">クリア</button>
 </div>
-
 
 <div class="tag-filter-wrapper">
   <div class="tag-filter-header" id="tagFilterHeader">
@@ -242,7 +250,7 @@
   <div class="selected-tags" id="selectedTagsView"></div>
 </div>
 
-<input type="text" id="search" placeholder="カード名・タイプ・シナジーで検索">
+<input type="text" id="search" placeholder="キーワード検索">
 
 <select id="sortSelect">
   <option value="rarity-asc">レア度（昇順）</option>
@@ -256,7 +264,6 @@
 </select>
 
 <div id="cardList"></div>
-
 <script>
 async function showLastUpdate() {
   async function getLastModified(url) {
@@ -305,6 +312,7 @@ async function loadCards() {
   const rarityOrder = { "コモン": 1, "アンコモン": 2, "レア": 3 };
   const rankOrder = { "S": 1, "A": 2, "B": 3, "C": 4, "D": 5, "E": 6 };
 
+  /* ▼ タグ自動生成 */
   const tagSet = new Set();
   cards.forEach(card => {
     (card.tags || []).forEach(t => tagSet.add(t));
@@ -321,12 +329,14 @@ async function loadCards() {
     tagButtonsContainer.appendChild(btn);
   });
 
+  /* ▼ タグフィルタ開閉 */
   tagFilterHeader.addEventListener('click', () => {
     const isOpen = tagButtonsContainer.classList.contains('open');
     tagButtonsContainer.classList.toggle('open');
     tagToggleArrow.textContent = isOpen ? '▼' : '▲';
   });
 
+  /* ▼ AND / OR */
   document.getElementById("modeAnd").addEventListener("click", () => {
     tagMode = "AND";
     document.getElementById("modeAnd").classList.add("active");
@@ -340,22 +350,18 @@ async function loadCards() {
     document.getElementById("modeAnd").classList.remove("active");
     render();
   });
-  
-  /* ▼ タグ選択クリア ▼ */
-document.getElementById("tagClear").addEventListener("click", () => {
-  selectedTags = [];
 
-  // ボタンの active を全部解除
-  tagButtonsContainer.querySelectorAll("button").forEach(btn => {
-    btn.classList.remove("active");
+  /* ▼ タグクリア */
+  document.getElementById("tagClear").addEventListener("click", () => {
+    selectedTags = [];
+    tagButtonsContainer.querySelectorAll("button").forEach(btn => {
+      btn.classList.remove("active");
+    });
+    selectedTagsView.textContent = "";
+    render();
   });
 
-  // 選択中タグ表示を消す
-  selectedTagsView.textContent = "";
-
-  render();
-});
-
+  /* ▼ タグ選択 */
   tagButtonsContainer.querySelectorAll('button').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -381,6 +387,7 @@ document.getElementById("tagClear").addEventListener("click", () => {
       '選択中タグ：' + selectedTags.map(t => `<span>${t}</span>`).join('');
   }
 
+  /* ▼ タブ OR フィルタ */
   tabs.forEach(tab => {
     tab.addEventListener("click", () => {
       const filter = tab.dataset.filter;
@@ -403,92 +410,144 @@ document.getElementById("tagClear").addEventListener("click", () => {
       render();
     });
   });
+  /* ▼ ソート関数（レア度 → コスト → 名前） */
+  function sortCards(data) {
+    const rarityOrder = { "レア": 1, "アンコモン": 2, "コモン": 3 };
 
-function sortCards(data) {
-  const rarityOrder = { "レア": 1, "アンコモン": 2, "コモン": 3 };
+    return data.sort((a, b) => {
+      // レア度
+      if (rarityOrder[a.rarity] !== rarityOrder[b.rarity]) {
+        return rarityOrder[a.rarity] - rarityOrder[b.rarity];
+      }
 
-  return data.sort((a, b) => {
-    // ① レア度
-    if (rarityOrder[a.rarity] !== rarityOrder[b.rarity]) {
-      return rarityOrder[a.rarity] - rarityOrder[b.rarity];
-    }
+      // コスト
+      if (a.cost !== b.cost) {
+        return a.cost - b.cost;
+      }
 
-    // ② コスト
-    if (a.cost !== b.cost) {
-      return a.cost - b.cost;
-    }
+      // 名前（日本語対応）
+      return a.name.localeCompare(b.name, "ja");
+    });
+  }
 
-    // ③ 名前（漢字混ざってもOK）
-    return a.name.localeCompare(b.name, "ja");
-  });
-}
-
-
+  /* ▼ メイン描画処理 */
   function render() {
-  list.innerHTML = "";
+    list.innerHTML = "";
+    let filtered = cards;
 
-  let filtered = cards;
+    /* ▼ タブ OR フィルタ */
+    if (selectedTabFilters.length > 0) {
+      filtered = filtered.filter(card => {
+        if (selectedTabFilters.includes("common")) {
+          const isCommon =
+            !card.tags.includes("アイアンクラッド専用") &&
+            !card.tags.includes("サイレント専用") &&
+            !card.tags.includes("リージェント専用") &&
+            !card.tags.includes("ネクロバインダー専用") &&
+            !card.tags.includes("ディフェクト専用");
+          if (isCommon) return true;
+        }
+        return selectedTabFilters.some(f => card.tags.includes(f));
+      });
+    }
 
-  /* ▼ タブ OR フィルタ */
-  if (selectedTabFilters.length > 0) {
-    filtered = filtered.filter(card => {
-      if (selectedTabFilters.includes("common")) {
-        const isCommon =
-          !card.tags.includes("アイアンクラッド専用") &&
-          !card.tags.includes("サイレント専用") &&
-          !card.tags.includes("リージェント専用") &&
-          !card.tags.includes("ネクロバインダー専用") &&
-          !card.tags.includes("ディフェクト専用");
-        if (isCommon) return true;
-      }
-      return selectedTabFilters.some(f => card.tags.includes(f));
+    /* ▼ タグフィルタ（AND / OR） */
+    if (selectedTags.length > 0) {
+      filtered = filtered.filter(card => {
+        const cardTagList = [
+          ...(card.tags || []),
+          `レア度:${card.rarity}`,
+          `コスト:${card.cost}`,
+          `強化後コスト:${card.upgradecost}`
+        ];
+
+        if (tagMode === "AND") {
+          return selectedTags.every(tag => cardTagList.includes(tag));
+        } else {
+          return selectedTags.some(tag => cardTagList.includes(tag));
+        }
+      });
+    }
+
+    /* ▼ 検索 */
+    const keyword = search.value.toLowerCase();
+    if (keyword) {
+      filtered = filtered.filter(c =>
+        JSON.stringify(c).toLowerCase().includes(keyword)
+      );
+    }
+
+    /* ▼ ★ ソート（ここが重要） ★ */
+    filtered = sortCards(filtered);
+
+    /* ▼ カード描画 */
+    filtered.forEach(card => {
+      const div = document.createElement('div');
+      div.className = "card";
+
+      // レア度枠線
+      if (card.rarity === "レア") div.classList.add("rare");
+      else if (card.rarity === "アンコモン") div.classList.add("uncommon");
+      else div.classList.add("common");
+
+      // 色分け
+      if (card.tags.includes("アイアンクラッド専用")) div.classList.add("ironclad");
+      else if (card.tags.includes("サイレント専用")) div.classList.add("silent");
+      else if (card.tags.includes("リージェント専用")) div.classList.add("regent");
+      else if (card.tags.includes("ネクロバインダー専用")) div.classList.add("necrobinder");
+      else if (card.tags.includes("ディフェクト専用")) div.classList.add("defect");
+      else div.classList.add("colorless");
+
+      // レア度色
+      let rarityClass = "rarity-common";
+      if (card.rarity === "レア") rarityClass = "rarity-rare";
+      else if (card.rarity === "アンコモン") rarityClass = "rarity-uncommon";
+
+      // アイコン
+      let typeIcon = "❓";
+      if (card.type === "アタック") typeIcon = "⚔";
+      else if (card.type === "スキル") typeIcon = "📘";
+      else if (card.type === "パワー") typeIcon = "💪";
+
+      div.innerHTML = `
+        <strong><span class="type-icon">${typeIcon}</span>${card.name}</strong><br>
+        タイプ：${card.type}<br>
+        レア度：<span class="${rarityClass}">${card.rarity}</span><br>
+
+        <div class="toggle-box">
+          <span class="toggle-arrow">▼</span>コスト：${card.cost}
+          <div class="toggle-content">強化後コスト：${card.upgradecost}</div>
+        </div>
+
+        <div class="toggle-box">
+          <span class="toggle-arrow">▼</span>効果：${card.effect}
+          <div class="toggle-content">強化後：${card.upgradeEffect}</div>
+        </div>
+
+        シナジー：${(card.synergy || []).join(", ")}<br>
+        ランク：${card.valuation}
+      `;
+
+      // 折りたたみ
+      div.querySelectorAll(".toggle-box").forEach(box => {
+        const arrow = box.querySelector(".toggle-arrow");
+        const content = box.querySelector(".toggle-content");
+        box.addEventListener("click", () => {
+          const isOpen = content.classList.contains("open");
+          content.classList.toggle("open");
+          arrow.textContent = isOpen ? "▼" : "▲";
+        });
+      });
+
+      list.appendChild(div);
     });
   }
 
-  /* ▼ タグフィルタ（AND / OR） */
-  if (selectedTags.length > 0) {
-    filtered = filtered.filter(card => {
-      const cardTagList = [
-        ...(card.tags || []),
-        `レア度:${card.rarity}`,
-        `コスト:${card.cost}`,
-        `強化後コスト:${card.upgradecost}`
-      ];
-
-      if (tagMode === "AND") {
-        return selectedTags.every(tag => cardTagList.includes(tag));
-      } else {
-        return selectedTags.some(tag => cardTagList.includes(tag));
-      }
-    });
-  }
-
-  /* ▼ 検索 */
-  const keyword = search.value.toLowerCase();
-  if (keyword) {
-    filtered = filtered.filter(c =>
-      JSON.stringify(c).toLowerCase().includes(keyword)
-    );
-  }
-
-  /* ▼ ★ここにソートを置く（重要）★ */
-  filtered = sortCards(filtered);
-
-  /* ▼ カード描画 */
-  filtered.forEach(card => {
-    const div = document.createElement('div');
-    div.className = "card";
-
-    // …（カードのHTML生成処理）…
-
-    list.appendChild(div);
-  });
-}
-
-
+  /* ▼ イベント登録 */
   search.addEventListener('input', render);
   sortSelect.addEventListener('change', render);
 
+  /* ▼ 初回描画 */
   render();
 }
 
