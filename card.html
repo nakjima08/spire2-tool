@@ -7,5 +7,21 @@
 <body>
   <h1>カード図鑑</h1>
   <p>ここにカード一覧を表示します。</p>
+  
+  <script>
+fetch('cards.json')
+  .then(response => response.json())
+  .then(cards => {
+    const container = document.createElement('div');
+    cards.forEach(card => {
+      const item = document.createElement('div');
+      item.innerHTML = `<strong>${card.name}</strong> (${card.type}) - cost: ${card.cost}`;
+      container.appendChild(item);
+    });
+    document.body.appendChild(container);
+  });
+</script>
+
 </body>
 </html>
+
