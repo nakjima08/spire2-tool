@@ -39,13 +39,13 @@
       margin-bottom: 20px;
     }
 
-    #search {
+    #search, #sortSelect {
       width: 100%;
       padding: 10px;
       font-size: 16px;
       border-radius: 6px;
       border: none;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
     }
 
     /* ▼ カード一覧をグリッド化 ▼ */
@@ -128,6 +128,20 @@
 
 <input type="text" id="search" placeholder="カード名・タイプ・シナジーで検索">
 
+<!-- ▼ ソート選択 ▼ -->
+<select id="sortSelect">
+  <option value="name-asc">あいうえお順（昇順）</option>
+  <option value="name-desc">あいうえお順（降順）</option>
+  <option value="rarity-asc">レア度（昇順）</option>
+  <option value="rarity-desc">レア度（降順）</option>
+  <option value="cost-asc">コスト（昇順）</option>
+  <option value="cost-desc">コスト（降順）</option>
+  <option value="ucost-asc">強化後コスト（昇順）</option>
+  <option value="ucost-desc">強化後コスト（降順）</option>
+  <option value="rank-asc">ランク（昇順）</option>
+  <option value="rank-desc">ランク（降順）</option>
+</select>
+
 <div id="cardList"></div>
 
 <script>
@@ -149,87 +163,142 @@ showLastUpdate();
 /* ▼ カード読み込み ▼ */
 async function loadCards() {
   const response = await fetch('cards.json?cache=' + Date.now());
-  const cards = await response.json();
+  let cards = await response.json();
   const list = document.getElementById('cardList');
   const search = document.getElementById('search');
+  const sortSelect = document.getElementById('sortSelect');
+
+  /* ▼ レア度の並び順定義（昇順用） */
+  const rarityOrder = { "コモン": 1, "アンコモン": 2, "レア": 3 };
+
+  /* ▼ ランクの並び順（例：S > A > B > C > D > E） */
+  const rankOrder = { "S": 1, "A": 2, "B": 3, "C": 4, "D": 5, "E": 6 };
+
+  function sortCards(data) {
+    const mode = sortSelect.value;
+
+    return data.sort((a, b) => {
+      switch (mode) {
+
+        case "name-asc":
+          return a.name.localeCompare(b.name, "ja");
+
+        case "name-desc":
+          return b.name.localeCompare(a.name, "ja");
+
+        case "rarity-asc":
+          return rarityOrder[a.rarity] - rarityOrder[b.rarity];
+
+        case "rarity-desc":
+          return rarityOrder[b.rarity] - rarityOrder[a.rarity];
+
+        case "cost-asc":
+          return a.cost - b.cost;
+
+        case "cost-desc":
+          return b.cost - a.cost;
+
+        case "ucost-asc":
+          return Number(a.upgradecost) - Number(b.upgradecost);
+
+        case "ucost-desc":
+          return Number(b.upgradecost) - Number(a.upgradecost);
+
+        case "rank-asc":
+          return rankOrder[a.valuation] - rankOrder[b.valuation];
+
+        case "rank-desc":
+          return rankOrder[b.valuation] - rankOrder[a.valuation];
+
+        default:
+          return 0;
+      }
+    });
+  }
 
   function render(filter = "") {
     list.innerHTML = "";
 
-    cards
-      .filter(c => JSON.stringify(c).toLowerCase().includes(filter.toLowerCase()))
-      .forEach(card => {
+    let filtered = cards.filter(c =>
+      JSON.stringify(c).toLowerCase().includes(filter.toLowerCase())
+    );
 
-        const div = document.createElement('div');
-        div.className = "card";
+    let sorted = sortCards(filtered);
 
-        /* ▼ キャラ専用背景色 ▼ */
-        if (card.tags.includes("アイアンクラッド専用")) div.classList.add("ironclad");
-        else if (card.tags.includes("サイレント専用")) div.classList.add("silent");
-        else if (card.tags.includes("リージェント専用")) div.classList.add("regent");
-        else if (card.tags.includes("ネクロバインダー専用")) div.classList.add("necrobinder");
-        else if (card.tags.includes("ディフェクト専用")) div.classList.add("defect");
-        else div.classList.add("colorless");
+    sorted.forEach(card => {
 
-        /* ▼ レア度枠線 ▼ */
-        if (card.rarity === "レア") div.classList.add("rare");
-        else if (card.rarity === "アンコモン") div.classList.add("uncommon");
-        else div.classList.add("common");
+      const div = document.createElement('div');
+      div.className = "card";
 
-        /* ▼ レア度文字色 ▼ */
-        let rarityClass = "rarity-common";
-        if (card.rarity === "レア") rarityClass = "rarity-rare";
-        else if (card.rarity === "アンコモン") rarityClass = "rarity-uncommon";
+      /* ▼ キャラ専用背景色 ▼ */
+      if (card.tags.includes("アイアンクラッド専用")) div.classList.add("ironclad");
+      else if (card.tags.includes("サイレント専用")) div.classList.add("silent");
+      else if (card.tags.includes("リージェント専用")) div.classList.add("regent");
+      else if (card.tags.includes("ネクロバインダー専用")) div.classList.add("necrobinder");
+      else if (card.tags.includes("ディフェクト専用")) div.classList.add("defect");
+      else div.classList.add("colorless");
 
-        /* ▼ タイプアイコン ▼ */
-        let typeIcon = "❓";
-        if (card.type === "アタック") typeIcon = "⚔";
-        else if (card.type === "スキル") typeIcon = "📘";
-        else if (card.type === "パワー") typeIcon = "💪";
+      /* ▼ レア度枠線 ▼ */
+      if (card.rarity === "レア") div.classList.add("rare");
+      else if (card.rarity === "アンコモン") div.classList.add("uncommon");
+      else div.classList.add("common");
 
-        /* ▼ HTML本体（強化後コストの文言を「強化後」に変更） ▼ */
-        div.innerHTML = `
-          <strong><span class="type-icon">${typeIcon}</span>${card.name}</strong><br>
-          タイプ：${card.type}<br>
-          レア度：<span class="${rarityClass}">${card.rarity}</span><br>
+      /* ▼ レア度文字色 ▼ */
+      let rarityClass = "rarity-common";
+      if (card.rarity === "レア") rarityClass = "rarity-rare";
+      else if (card.rarity === "アンコモン") rarityClass = "rarity-uncommon";
 
-          <div class="toggle-box cost-box">
-            <span class="toggle-arrow">▼</span>コスト：${card.cost}
-            <div class="toggle-content">強化後：${card.upgradecost}</div>
-          </div>
+      /* ▼ タイプアイコン ▼ */
+      let typeIcon = "❓";
+      if (card.type === "アタック") typeIcon = "⚔";
+      else if (card.type === "スキル") typeIcon = "📘";
+      else if (card.type === "パワー") typeIcon = "💪";
 
-          <div class="toggle-box effect-box">
-            <span class="toggle-arrow">▼</span>効果：${card.effect}
-            <div class="toggle-content">強化後：${card.upgradeEffect}</div>
-          </div>
+      /* ▼ HTML本体 ▼ */
+      div.innerHTML = `
+        <strong><span class="type-icon">${typeIcon}</span>${card.name}</strong><br>
+        タイプ：${card.type}<br>
+        レア度：<span class="${rarityClass}">${card.rarity}</span><br>
 
-          シナジー：${card.synergy.join(", ")}<br>
-          ランク：${card.valuation}
-        `;
+        <div class="toggle-box cost-box">
+          <span class="toggle-arrow">▼</span>コスト：${card.cost}
+          <div class="toggle-content">強化後：${card.upgradecost}</div>
+        </div>
 
-        /* ▼ アニメーション付き折りたたみ ▼ */
-        div.querySelectorAll(".toggle-box").forEach(box => {
-          const arrow = box.querySelector(".toggle-arrow");
-          const content = box.querySelector(".toggle-content");
+        <div class="toggle-box effect-box">
+          <span class="toggle-arrow">▼</span>効果：${card.effect}
+          <div class="toggle-content">強化後：${card.upgradeEffect}</div>
+        </div>
 
-          box.addEventListener("click", () => {
-            const isOpen = content.classList.contains("open");
+        シナジー：${card.synergy.join(", ")}<br>
+        ランク：${card.valuation}
+      `;
 
-            if (isOpen) {
-              content.classList.remove("open");
-              arrow.textContent = "▼";
-            } else {
-              content.classList.add("open");
-              arrow.textContent = "▲";
-            }
-          });
+      /* ▼ アニメーション付き折りたたみ ▼ */
+      div.querySelectorAll(".toggle-box").forEach(box => {
+        const arrow = box.querySelector(".toggle-arrow");
+        const content = box.querySelector(".toggle-content");
+
+        box.addEventListener("click", () => {
+          const isOpen = content.classList.contains("open");
+
+          if (isOpen) {
+            content.classList.remove("open");
+            arrow.textContent = "▼";
+          } else {
+            content.classList.add("open");
+            arrow.textContent = "▲";
+          }
         });
-
-        list.appendChild(div);
       });
+
+      list.appendChild(div);
+    });
   }
 
   search.addEventListener('input', () => render(search.value));
+  sortSelect.addEventListener('change', () => render(search.value));
+
   render();
 }
 
