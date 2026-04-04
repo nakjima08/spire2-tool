@@ -1,16 +1,71 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Slay the Spire 2 補助ツール</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #1a1a1a;
+      color: #f0f0f0;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+    header {
+      background: #ff4757;
+      padding: 20px;
+      font-size: 24px;
+      font-weight: bold;
+    }
+    .container {
+      padding: 20px;
+    }
+    .menu {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+    .menu a {
+      display: block;
+      padding: 15px;
+      background: #2f3542;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 18px;
+      transition: 0.2s;
+    }
+    .menu a:hover {
+      background: #57606f;
+    }
+    footer {
+      margin-top: 40px;
+      font-size: 12px;
+      opacity: 0.6;
+    }
+  </style>
 </head>
 <body>
-  <h1>Slay the Spire 2 補助ツール</h1>
-  <p>ここにカード図鑑・レリック図鑑・デッキ管理ツールを追加していきます。</p>
-  
-  <a href="card.html">カード図鑑</a><br>
-<a href="relic.html">レリック図鑑</a><br>
-<a href="deck.html">デッキ管理ツール</a>
+
+<header>Slay the Spire 2 補助ツール</header>
+
+<div class="container">
+  <p>カードの強さ・シナジー・勝ち筋を素早く確認できる便利ツール。</p>
+
+  <div class="menu">
+    <a href="card.html">📘 カード図鑑</a>
+    <a href="relic.html">📙 レリック図鑑</a>
+    <a href="deck.html">🃏 デッキ管理ツール</a>
+  </div>
+
+  <footer>
+    © 2026 Spire2 Helper Tool
+  </footer>
+</div>
 
 </body>
 </html>
