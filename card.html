@@ -86,16 +86,19 @@
       margin-right: 6px;
       vertical-align: middle;
     }
+
     /* ▼ キャラ専用背景色 ▼ */
     .card.ironclad { background: #8b1e1e; }
     .card.silent { background: #1e8b3a; }
     .card.regent { background: #d97a1e; }
     .card.necrobinder { background: #6a1e8b; }
     .card.defect { background: #1ea7d9; }
+
+    /* ▼ 共通カード（枠線を壊さない） ▼ */
     .card.colorless {
-  background: #555555;
-  border: 3px solid transparent !important;
-}
+      background: #555555;
+      border: 3px solid transparent !important;
+    }
 
     /* ▼ レア度文字色 ▼ */
     .rarity-rare { color: #ffd700 !important; font-weight: bold; }
@@ -139,7 +142,6 @@
 
 <body>
 
-<!-- ▼ 左上の更新日時 ▼ -->
 <div id="lastUpdate"></div>
 
 <h1>📘 カード図鑑</h1>
@@ -171,7 +173,7 @@
 </select>
 
 <div id="cardList"></div>
-  <script>
+<script>
 /* ▼ 最終更新日時 ▼ */
 function showLastUpdate() {
   const now = new Date();
@@ -254,6 +256,12 @@ async function loadCards() {
       const div = document.createElement('div');
       div.className = "card";
 
+      /* ▼ レア度枠線クラス付与（重要） ▼ */
+      if (card.rarity === "レア") div.classList.add("rare");
+      else if (card.rarity === "アンコモン") div.classList.add("uncommon");
+      else div.classList.add("common");
+
+      /* ▼ キャラ専用背景色 ▼ */
       if (card.tags.includes("アイアンクラッド専用")) div.classList.add("ironclad");
       else if (card.tags.includes("サイレント専用")) div.classList.add("silent");
       else if (card.tags.includes("リージェント専用")) div.classList.add("regent");
@@ -325,4 +333,3 @@ loadCards();
 
 </body>
 </html>
-
