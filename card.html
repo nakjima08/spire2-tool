@@ -300,13 +300,26 @@ async function loadCards() {
   const rarityOrder = { "コモン": 1, "アンコモン": 2, "レア": 3 };
   const rankOrder = { "S": 1, "A": 2, "B": 3, "C": 4, "D": 5, "E": 6 };
 
-  /* ▼ タグ一覧を cards.json から自動生成 ▼ */
-  const tagSet = new Set();
-  cards.forEach(card => {
-    (card.tags || []).forEach(t => tagSet.add(t));
-  });
+  /* ▼ タグ一覧を cards.json から自動生成（レア度・コストも追加） ▼ */
+const tagSet = new Set();
 
-  const allTags = Array.from(tagSet).sort((a, b) => a.localeCompare(b, 'ja'));
+cards.forEach(card => {
+  // 元の tags
+  (card.tags || []).forEach(t => tagSet.add(t));
+
+  // レア度タグ
+  if (card.rarity) tagSet.add(`レア度:${card.rarity}`);
+
+  // コストタグ
+  if (card.cost !== undefined) tagSet.add(`コスト:${card.cost}`);
+
+  // 強化後コストタグ
+  if (card.upgradecost !== undefined) tagSet.add(`強化後コスト:${card.upgradecost}`);
+});
+
+// あいうえお順ソート
+const allTags = Array.from(tagSet).sort((a, b) => a.localeCompare(b, 'ja'));
+
 
   /* ▼ タグボタンを生成 ▼ */
   allTags.forEach(tag => {
@@ -391,12 +404,22 @@ async function loadCards() {
       }
     }
 
-    /* ▼ タグ AND フィルタ ▼ */
-    if (selectedTags.length > 0) {
-      filtered = filtered.filter(card =>
-        selectedTags.every(tag => (card.tags || []).includes(tag))
-      );
-    }
+/* ▼ タグ AND フィルタ ▼ */
+if (selectedTags.length > 0) {
+  filtered = filtered.filter(card => {
+    // カードの全タグを合成
+    const cardTagList = [
+      ...(card.tags || []),
+      `レア度:${card.rarity}`,
+      `コスト:${card.cost}`,
+      `強化後コスト:${card.upgradecost}`
+    ];
+
+    // AND 条件
+    return selectedTags.every(tag => cardTagList.includes(tag));
+  });
+}
+
 
     /* ▼ 検索 ▼ */
     const keyword = search.value.toLowerCase();
