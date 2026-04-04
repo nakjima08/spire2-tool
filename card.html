@@ -46,16 +46,17 @@
     .card.defect { background: #1ea7d9; }
     .card.colorless { background: #555555; }
 
-    /* ▼ レア度枠線（優先度を上げるため .card.rare の形にする） ▼ */
-    .card.rare {
-      border: 3px solid #ffd700 !important;
-    }
-    .card.uncommon {
-      border: 3px solid #1ec8ff !important;
-    }
-    .card.common {
-      border: 3px solid transparent !important;
-    }
+/* ▼ レア度枠線（必ず .card より後ろに書く） ▼ */
+.card.rare {
+  border: 3px solid #ffd700 !important; /* 金 */
+}
+.card.uncommon {
+  border: 3px solid #1ec8ff !important; /* 水色 */
+}
+.card.common {
+  border: 3px solid transparent !important; /* なし */
+}
+/* ▲ レア度枠線 ▲ */
 
     /* ▼ レア度文字色（親の color を上書きするため強めに指定） ▼ */
     .rarity-rare {
