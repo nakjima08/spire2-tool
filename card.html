@@ -24,44 +24,51 @@
       border: none;
       margin-bottom: 20px;
     }
+
+    /* ▼ カード基本デザイン ▼ */
     .card {
       background: #2f3542;
       padding: 15px;
       border-radius: 8px;
       margin-bottom: 10px;
-      border: 3px solid transparent;
+      border: 3px solid transparent; /* ここは残すが、後で上書き可能にする */
+      color: #ffffff;
     }
     .card strong {
       font-size: 18px;
     }
 
-    /* ▼▼ キャラ専用背景色 ▼▼ */
+    /* ▼ キャラ専用背景色 ▼ */
     .card.ironclad { background: #8b1e1e; }
     .card.silent { background: #1e8b3a; }
     .card.regent { background: #d97a1e; }
     .card.necrobinder { background: #6a1e8b; }
     .card.defect { background: #1ea7d9; }
     .card.colorless { background: #555555; }
-    /* ▲▲ キャラ専用背景色 ▲▲ */
 
-    /* ▼▼ レア度の枠線色 ▼▼ */
+    /* ▼ レア度枠線（優先度を上げるため .card.rare の形にする） ▼ */
     .card.rare {
-      border-color: #ffd700; /* 金色 */
+      border: 3px solid #ffd700 !important;
     }
     .card.uncommon {
-      border-color: #1ec8ff; /* 水色 */
+      border: 3px solid #1ec8ff !important;
     }
     .card.common {
-      border-color: transparent; /* 枠線なし */
+      border: 3px solid transparent !important;
     }
-    /* ▲▲ レア度の枠線色 ▲▲ */
 
-    /* ▼▼ レア度の文字色 ▼▼ */
-    .rarity-rare { color: #ffd700; font-weight: bold; }
-    .rarity-uncommon { color: #1ec8ff; font-weight: bold; }
-    .rarity-common { color: #cccccc; }
-    /* ▲▲ レア度の文字色 ▲▲ */
-
+    /* ▼ レア度文字色（親の color を上書きするため強めに指定） ▼ */
+    .rarity-rare {
+      color: #ffd700 !important;
+      font-weight: bold;
+    }
+    .rarity-uncommon {
+      color: #1ec8ff !important;
+      font-weight: bold;
+    }
+    .rarity-common {
+      color: #cccccc !important;
+    }
   </style>
 </head>
 <body>
@@ -87,26 +94,23 @@ async function loadCards() {
         const div = document.createElement('div');
         div.className = "card";
 
-        /* ▼▼ キャラ専用タグ → 背景色クラス付与 ▼▼ */
+        /* ▼ キャラ専用背景色 ▼ */
         if (card.tags.includes("アイアンクラッド専用")) div.classList.add("ironclad");
         else if (card.tags.includes("サイレント専用")) div.classList.add("silent");
         else if (card.tags.includes("リージェント専用")) div.classList.add("regent");
         else if (card.tags.includes("ネクロバインダー専用")) div.classList.add("necrobinder");
         else if (card.tags.includes("ディフェクト専用")) div.classList.add("defect");
         else div.classList.add("colorless");
-        /* ▲▲ キャラ専用タグ → 背景色クラス付与 ▲▲ */
 
-        /* ▼▼ レア度 → 枠線クラス付与 ▼▼ */
+        /* ▼ レア度枠線 ▼ */
         if (card.rarity === "レア") div.classList.add("rare");
         else if (card.rarity === "アンコモン") div.classList.add("uncommon");
         else div.classList.add("common");
-        /* ▲▲ レア度 → 枠線クラス付与 ▲▲ */
 
-        /* ▼▼ レア度 → 文字色クラス ▼▼ */
+        /* ▼ レア度文字色クラス ▼ */
         let rarityClass = "rarity-common";
         if (card.rarity === "レア") rarityClass = "rarity-rare";
         else if (card.rarity === "アンコモン") rarityClass = "rarity-uncommon";
-        /* ▲▲ レア度 → 文字色クラス ▲▲ */
 
         div.innerHTML = `
           <strong>${card.name}</strong><br>
