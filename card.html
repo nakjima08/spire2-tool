@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>カード図鑑</title>
   <style>
+    /* すでにあるCSSの下に追加してOK */
+    .type-icon {
+    font-size: 20px;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
     body {
       font-family: Arial, sans-serif;
       background: #1a1a1a;
@@ -82,6 +88,11 @@
 
 <script>
 async function loadCards() {
+  let typeIcon = "❓";
+if (card.type === "アタック") typeIcon = "⚔";
+else if (card.type === "スキル") typeIcon = "📘";
+else if (card.type === "パワー") typeIcon = "💪";
+
   const response = await fetch('cards.json?cache=' + Date.now());
   const cards = await response.json();
   const list = document.getElementById('cardList');
@@ -114,15 +125,15 @@ async function loadCards() {
         else if (card.rarity === "アンコモン") rarityClass = "rarity-uncommon";
 
         div.innerHTML = `
-          <strong>${card.name}</strong><br>
-          タイプ：${card.type}<br>
-          コスト：${card.cost}<br>
-          レア度：<span class="${rarityClass}">${card.rarity}</span><br>
-          効果：${card.effect}<br>
-          強化後：${card.upgradeEffect}<br>
-          シナジー：${card.synergy.join(", ")}<br>
-          ランク：${card.valuation}
-        `;
+  <strong><span class="type-icon">${typeIcon}</span>${card.name}</strong><br>
+  タイプ：${card.type}<br>
+  コスト：${card.cost}<br>
+  レア度：<span class="${rarityClass}">${card.rarity}</span><br>
+  効果：${card.effect}<br>
+  強化後：${card.upgradeEffect}<br>
+  シナジー：${card.synergy.join(", ")}<br>
+  ランク：${card.valuation}
+`;
         list.appendChild(div);
       });
   }
