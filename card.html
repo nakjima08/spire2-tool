@@ -75,7 +75,6 @@
       background: #2f3542;
       padding: 15px;
       border-radius: 8px;
-      border: 3px solid transparent;
       color: #ffffff;
       height: 100%;
     }
@@ -126,11 +125,11 @@
       max-height: 200px;
       opacity: 1;
     }
-        /* ▼ レア度枠線（コモンも灰色枠線） ▼ */
- .card.rare { border: 3px solid #ffd700 !important; box-sizing: border-box; }
-.card.uncommon { border: 3px solid #1ec8ff !important; box-sizing: border-box; }
-.card.common { border: 3px solid #888888 !important; box-sizing: border-box; }
 
+    /* ▼ ★ 枠線（最優先で適用されるよう style の一番下に配置） ▼ */
+    .card.rare { border: 3px solid #ffd700 !important; box-sizing: border-box; }
+    .card.uncommon { border: 3px solid #1ec8ff !important; box-sizing: border-box; }
+    .card.common { border: 3px solid #888888 !important; box-sizing: border-box; }
   </style>
 </head>
 
