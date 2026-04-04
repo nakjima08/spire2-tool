@@ -88,11 +88,6 @@
 
 <script>
 async function loadCards() {
-  let typeIcon = "❓";
-if (card.type === "アタック") typeIcon = "⚔";
-else if (card.type === "スキル") typeIcon = "📘";
-else if (card.type === "パワー") typeIcon = "💪";
-
   const response = await fetch('cards.json?cache=' + Date.now());
   const cards = await response.json();
   const list = document.getElementById('cardList');
@@ -101,41 +96,48 @@ else if (card.type === "パワー") typeIcon = "💪";
   function render(filter = "") {
     list.innerHTML = "";
     cards
-      .filter(c => JSON.stringify(c).toLowerCase().includes(filter.toLowerCase()))
-      .forEach(card => {
-        const div = document.createElement('div');
-        div.className = "card";
+  .filter(c => JSON.stringify(c).toLowerCase().includes(filter.toLowerCase()))
+  .forEach(card => {
+    const div = document.createElement('div');
+    div.className = "card";
 
-        /* ▼ キャラ専用背景色 ▼ */
-        if (card.tags.includes("アイアンクラッド専用")) div.classList.add("ironclad");
-        else if (card.tags.includes("サイレント専用")) div.classList.add("silent");
-        else if (card.tags.includes("リージェント専用")) div.classList.add("regent");
-        else if (card.tags.includes("ネクロバインダー専用")) div.classList.add("necrobinder");
-        else if (card.tags.includes("ディフェクト専用")) div.classList.add("defect");
-        else div.classList.add("colorless");
+    /* ▼ キャラ専用背景色 ▼ */
+    if (card.tags.includes("アイアンクラッド専用")) div.classList.add("ironclad");
+    else if (card.tags.includes("サイレント専用")) div.classList.add("silent");
+    else if (card.tags.includes("リージェント専用")) div.classList.add("regent");
+    else if (card.tags.includes("ネクロバインダー専用")) div.classList.add("necrobinder");
+    else if (card.tags.includes("ディフェクト専用")) div.classList.add("defect");
+    else div.classList.add("colorless");
 
-        /* ▼ レア度枠線 ▼ */
-        if (card.rarity === "レア") div.classList.add("rare");
-        else if (card.rarity === "アンコモン") div.classList.add("uncommon");
-        else div.classList.add("common");
+    /* ▼ レア度枠線 ▼ */
+    if (card.rarity === "レア") div.classList.add("rare");
+    else if (card.rarity === "アンコモン") div.classList.add("uncommon");
+    else div.classList.add("common");
 
-        /* ▼ レア度文字色クラス ▼ */
-        let rarityClass = "rarity-common";
-        if (card.rarity === "レア") rarityClass = "rarity-rare";
-        else if (card.rarity === "アンコモン") rarityClass = "rarity-uncommon";
+    /* ▼ レア度文字色クラス ▼ */
+    let rarityClass = "rarity-common";
+    if (card.rarity === "レア") rarityClass = "rarity-rare";
+    else if (card.rarity === "アンコモン") rarityClass = "rarity-uncommon";
 
-        div.innerHTML = `
-  <strong><span class="type-icon">${typeIcon}</span>${card.name}</strong><br>
-  タイプ：${card.type}<br>
-  コスト：${card.cost}<br>
-  レア度：<span class="${rarityClass}">${card.rarity}</span><br>
-  効果：${card.effect}<br>
-  強化後：${card.upgradeEffect}<br>
-  シナジー：${card.synergy.join(", ")}<br>
-  ランク：${card.valuation}
-`;
-        list.appendChild(div);
-      });
+    /* ▼ タイプアイコン ▼ */
+    let typeIcon = "❓";
+    if (card.type === "アタック") typeIcon = "⚔";
+    else if (card.type === "スキル") typeIcon = "📘";
+    else if (card.type === "パワー") typeIcon = "💪";
+
+    div.innerHTML = `
+      <strong><span class="type-icon">${typeIcon}</span>${card.name}</strong><br>
+      タイプ：${card.type}<br>
+      コスト：${card.cost}<br>
+      レア度：<span class="${rarityClass}">${card.rarity}</span><br>
+      効果：${card.effect}<br>
+      強化後：${card.upgradeEffect}<br>
+      シナジー：${card.synergy.join(", ")}<br>
+      ランク：${card.valuation}
+    `;
+    list.appendChild(div);
+  });
+
   }
 
   search.addEventListener('input', () => render(search.value));
