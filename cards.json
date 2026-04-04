@@ -1,0 +1,16 @@
+[
+  {
+    "name": "Strike",
+    "type": "Attack",
+    "cost": 1,
+    "synergy": ["基本"],
+    "power": "C"
+  },
+  {
+    "name": "Defend",
+    "type": "Skill",
+    "cost": 1,
+    "synergy": ["基本"],
+    "power": "C"
+  }
+]
