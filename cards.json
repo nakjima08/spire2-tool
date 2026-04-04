@@ -3,6 +3,7 @@
     "name": "ストライク",
     "type": "アタック",
     "cost": 1,
+    "upgradecost": "1",
     "rarity": "コモン",
     "effect": "6ダメージを与える。",
     "upgradeEffect": "9ダメージを与える。",
