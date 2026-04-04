@@ -75,7 +75,7 @@
       background: #2f3542;
       padding: 15px;
       border-radius: 8px;
-      border: 3px solid transparent; /* ← これが重要 */
+      border: 3px solid transparent;
       box-sizing: border-box;
       color: #ffffff;
       height: 100%;
@@ -137,9 +137,39 @@
 
 <body>
 
-<div id="cardList"></div>
+<!-- ▼ 左上の更新日時 ▼ -->
+<div id="lastUpdate"></div>
 
-<script>
+<h1>📘 カード図鑑</h1>
+
+<!-- ▼ タブUI ▼ -->
+<div class="tabs">
+  <div class="tab active" data-filter="all">全カード</div>
+  <div class="tab" data-filter="アイアンクラッド専用">アイアンクラッド</div>
+  <div class="tab" data-filter="サイレント専用">サイレント</div>
+  <div class="tab" data-filter="リージェント専用">リージェント</div>
+  <div class="tab" data-filter="ネクロバインダー専用">ネクロバインダー</div>
+  <div class="tab" data-filter="ディフェクト専用">ディフェクト</div>
+  <div class="tab" data-filter="common">共通</div>
+</div>
+
+<input type="text" id="search" placeholder="カード名・タイプ・シナジーで検索">
+
+<select id="sortSelect">
+  <option value="name-asc">あいうえお順（昇順）</option>
+  <option value="name-desc">あいうえお順（降順）</option>
+  <option value="rarity-asc">レア度（昇順）</option>
+  <option value="rarity-desc">レア度（降順）</option>
+  <option value="cost-asc">コスト（昇順）</option>
+  <option value="cost-desc">コスト（降順）</option>
+  <option value="ucost-asc">強化後コスト（昇順）</option>
+  <option value="ucost-desc">強化後コスト（降順）</option>
+  <option value="rank-asc">ランク（昇順）</option>
+  <option value="rank-desc">ランク（降順）</option>
+</select>
+
+<div id="cardList"></div>
+  <script>
 /* ▼ 最終更新日時 ▼ */
 function showLastUpdate() {
   const now = new Date();
@@ -152,7 +182,6 @@ function showLastUpdate() {
     `最終更新：${y}/${m}/${d} ${h}:${min}`;
 }
 showLastUpdate();
-
 
 /* ▼ カード読み込み ▼ */
 async function loadCards() {
@@ -246,7 +275,7 @@ async function loadCards() {
 
         <div class="toggle-box">
           <span class="toggle-arrow">▼</span>コスト：${card.cost}
-          <div class="toggle-content">強化後：${card.upgradecost}</div>
+          <div class="toggle-content">強化後コスト：${card.upgradecost}</div>
         </div>
 
         <div class="toggle-box">
@@ -294,3 +323,4 @@ loadCards();
 
 </body>
 </html>
+
