@@ -1,1 +1,79 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>レリック図鑑</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #1a1a1a;
+      color: #f0f0f0;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    #search {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: none;
+      margin-bottom: 20px;
+    }
+    .relic {
+      background: #2f3542;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    .relic strong {
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>📙 レリック図鑑</h1>
+
+<input type="text" id="search" placeholder="レリック名・効果・シナジーで検索">
+
+<div id="relicList"></div>
+
+<script>
+async function loadRelics() {
+  const response = await fetch('relics.json');
+  const relics = await response.json();
+  const list = document.getElementById('relicList');
+  const search = document.getElementById('search');
+
+  function render(filter = "") {
+    list.innerHTML = "";
+    relics
+      .filter(r => JSON.stringify(r).toLowerCase().includes(filter.toLowerCase()))
+      .forEach(relic => {
+        const div = document.createElement('div');
+        div.className = "relic";
+        div.innerHTML = `
+          <strong>${relic.name}</strong><br>
+          レア度：${relic.rarity}<br>
+          効果：${relic.effect}<br>
+          シナジー：${relic.synergy.join(", ")}
+        `;
+        list.appendChild(div);
+      });
+  }
+
+  search.addEventListener('input', () => render(search.value));
+  render();
+}
+
+loadRelics();
+</script>
+
+</body>
+</html>
 
