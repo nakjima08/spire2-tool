@@ -33,6 +33,16 @@
     .card strong {
       font-size: 18px;
     }
+
+    /* ▼▼ キャラ専用色分け ▼▼ */
+    .card.ironclad { background: #8b1e1e; }      /* 赤 */
+    .card.silent { background: #1e8b3a; }        /* 緑 */
+    .card.regent { background: #d97a1e; }        /* オレンジ */
+    .card.necrobinder { background: #6a1e8b; }   /* 紫 */
+    .card.defect { background: #1ea7d9; }        /* 水色 */
+    .card.colorless { background: #555555; }     /* 灰色 */
+    /* ▲▲ キャラ専用色分け ▲▲ */
+
   </style>
 </head>
 <body>
@@ -45,7 +55,7 @@
 
 <script>
 async function loadCards() {
-  const response = await fetch('cards.json');
+  const response = await fetch('cards.json?cache=' + Date.now());
   const cards = await response.json();
   const list = document.getElementById('cardList');
   const search = document.getElementById('search');
@@ -57,16 +67,26 @@ async function loadCards() {
       .forEach(card => {
         const div = document.createElement('div');
         div.className = "card";
+
+        /* ▼▼ キャラ専用タグ → 背景色クラス付与 ▼▼ */
+        if (card.tags.includes("アイアンクラッド専用")) div.classList.add("ironclad");
+        else if (card.tags.includes("サイレント専用")) div.classList.add("silent");
+        else if (card.tags.includes("リージェント専用")) div.classList.add("regent");
+        else if (card.tags.includes("ネクロバインダー専用")) div.classList.add("necrobinder");
+        else if (card.tags.includes("ディフェクト専用")) div.classList.add("defect");
+        else div.classList.add("colorless");
+        /* ▲▲ キャラ専用タグ → 背景色クラス付与 ▲▲ */
+
         div.innerHTML = `
-  <strong>${card.name}</strong><br>
-  タイプ：${card.type}<br>
-  コスト：${card.cost}<br>
-  レア度：${card.rarity}<br>
-  効果：${card.effect}<br>
-  強化後：${card.upgradeEffect}<br>
-  シナジー：${card.synergy.join(", ")}<br>
-  ランク：${card.valuation}
-`;
+          <strong>${card.name}</strong><br>
+          タイプ：${card.type}<br>
+          コスト：${card.cost}<br>
+          レア度：${card.rarity}<br>
+          効果：${card.effect}<br>
+          強化後：${card.upgradeEffect}<br>
+          シナジー：${card.synergy.join(", ")}<br>
+          ランク：${card.valuation}
+        `;
         list.appendChild(div);
       });
   }
