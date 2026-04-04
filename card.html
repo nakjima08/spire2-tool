@@ -65,7 +65,7 @@
     .card.defect { background: #1ea7d9; }
     .card.colorless { background: #555555; }
 
-    /* ▼ レア度枠線（コモンも灰色枠線に変更） ▼ */
+    /* ▼ レア度枠線（コモンも灰色枠線） ▼ */
     .card.rare { border: 3px solid #ffd700 !important; }
     .card.uncommon { border: 3px solid #1ec8ff !important; }
     .card.common { border: 3px solid #888888 !important; }
@@ -75,24 +75,33 @@
     .rarity-uncommon { color: #1ec8ff !important; font-weight: bold; }
     .rarity-common { color: #cccccc !important; }
 
-    /* ▼ 効果折りたたみ ▼ */
-    .effect-box {
+    /* ▼ 折りたたみ共通 ▼ */
+    .toggle-box {
       cursor: pointer;
       padding: 5px 0;
       user-select: none;
     }
 
-    .effect-arrow {
+    .toggle-arrow {
       font-weight: bold;
       margin-right: 6px;
     }
 
-    .effect-upgrade {
-      display: none;
+    /* ▼ アニメーション付き折りたたみ ▼ */
+    .toggle-content {
+      max-height: 0;
+      overflow: hidden;
       margin-top: 4px;
       padding-left: 10px;
       color: #ffd24d;
       font-size: 14px;
+      opacity: 0;
+      transition: max-height 0.25s ease-out, opacity 0.25s ease-out;
+    }
+
+    .toggle-content.open {
+      max-height: 200px;
+      opacity: 1;
     }
   </style>
 </head>
@@ -150,27 +159,39 @@ async function loadCards() {
         div.innerHTML = `
           <strong><span class="type-icon">${typeIcon}</span>${card.name}</strong><br>
           タイプ：${card.type}<br>
-          コスト：${card.cost}<br>
+
+          <div class="toggle-box cost-box">
+            <span class="toggle-arrow">▼</span>コスト：${card.cost}
+            <div class="toggle-content">強化後コスト：${card.upgradecost}</div>
+          </div>
+
           レア度：<span class="${rarityClass}">${card.rarity}</span><br>
 
-          <div class="effect-box">
-            <span class="effect-arrow">▼</span>効果：${card.effect}
-            <div class="effect-upgrade">強化後：${card.upgradeEffect}</div>
+          <div class="toggle-box effect-box">
+            <span class="toggle-arrow">▼</span>効果：${card.effect}
+            <div class="toggle-content">強化後：${card.upgradeEffect}</div>
           </div>
 
           シナジー：${card.synergy.join(", ")}<br>
           ランク：${card.valuation}
         `;
 
-        /* ▼ 効果折りたたみ動作 ▼ */
-        const effectBox = div.querySelector(".effect-box");
-        const upgrade = div.querySelector(".effect-upgrade");
-        const arrow = div.querySelector(".effect-arrow");
+        /* ▼ アニメーション付き折りたたみ ▼ */
+        div.querySelectorAll(".toggle-box").forEach(box => {
+          const arrow = box.querySelector(".toggle-arrow");
+          const content = box.querySelector(".toggle-content");
 
-        effectBox.addEventListener("click", () => {
-          const isOpen = upgrade.style.display === "block";
-          upgrade.style.display = isOpen ? "none" : "block";
-          arrow.textContent = isOpen ? "▼" : "▲";
+          box.addEventListener("click", () => {
+            const isOpen = content.classList.contains("open");
+
+            if (isOpen) {
+              content.classList.remove("open");
+              arrow.textContent = "▼";
+            } else {
+              content.classList.add("open");
+              arrow.textContent = "▲";
+            }
+          });
         });
 
         list.appendChild(div);
