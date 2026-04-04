@@ -6,21 +6,6 @@
   <title>カード図鑑</title>
 
   <style>
-    .mode-btn {
-  padding: 4px 10px;
-  background: #333;
-  color: #fff;
-  border: 1px solid #666;
-  border-radius: 6px;
-  cursor: pointer;
-  margin-right: 6px;
-}
-
-.mode-btn.active {
-  background: #1e90ff;
-  border-color: #63b3ff;
-}
-
     /* ▼ 左上の最終更新日時 ▼ */
     #lastUpdate {
       position: absolute;
@@ -76,6 +61,27 @@
       background: #555;
       font-weight: bold;
       border: 2px solid #888;
+    }
+
+    /* ▼ AND / OR 切り替え ▼ */
+    #tagModeSwitch {
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .mode-btn {
+      padding: 4px 10px;
+      background: #333;
+      color: #fff;
+      border: 1px solid #666;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-right: 6px;
+    }
+
+    .mode-btn.active {
+      background: #1e90ff;
+      border-color: #63b3ff;
     }
 
     /* ▼ タグフィルタ ▼ */
@@ -237,11 +243,13 @@
   <div class="tab" data-filter="ディフェクト専用">ディフェクト</div>
   <div class="tab" data-filter="common">共通</div>
 </div>
+
 <!-- ▼ AND / OR 切り替え -->
-<div id="tagModeSwitch" style="margin-bottom: 8px; font-size: 14px;">
+<div id="tagModeSwitch">
   <button id="modeAnd" class="mode-btn active">AND</button>
   <button id="modeOr" class="mode-btn">OR</button>
 </div>
+
 <!-- ▼ タグフィルタ（自動生成） ▼ -->
 <div class="tag-filter-wrapper">
   <div class="tag-filter-header" id="tagFilterHeader">
@@ -268,7 +276,6 @@
 </select>
 
 <div id="cardList"></div>
-
 <script>
 /* ▼ 最終更新日時（card.html / cards.json の新しい方） ▼ */
 async function showLastUpdate() {
@@ -299,20 +306,7 @@ async function showLastUpdate() {
 showLastUpdate();
 
 /* ▼ カード読み込み ▼ */
-async function loadCards(document.getElementById("modeAnd").addEventListener("click", () => {
-  tagMode = "AND";
-  document.getElementById("modeAnd").classList.add("active");
-  document.getElementById("modeOr").classList.remove("active");
-  render();
-});
-
-document.getElementById("modeOr").addEventListener("click", () => {
-  tagMode = "OR";
-  document.getElementById("modeOr").classList.add("active");
-  document.getElementById("modeAnd").classList.remove("active");
-  render();
-});
-) {
+async function loadCards() {
   const response = await fetch('cards.json?cache=' + Date.now());
   let cards = await response.json();
 
@@ -328,32 +322,29 @@ document.getElementById("modeOr").addEventListener("click", () => {
 
   let currentFilter = "all";
   let selectedTags = [];
-  let tagMode = "AND"; // OR に切り替え可能
-
+  let tagMode = "AND"; // AND / OR 切り替え
 
   const rarityOrder = { "コモン": 1, "アンコモン": 2, "レア": 3 };
   const rankOrder = { "S": 1, "A": 2, "B": 3, "C": 4, "D": 5, "E": 6 };
 
-  /* ▼ タグ一覧を cards.json から自動生成（レア度・コストも追加） ▼ */
-const tagSet = new Set();
+  /* ▼ タグ一覧を cards.json から自動生成（レア度・コストも含む） ▼ */
+  const tagSet = new Set();
 
-cards.forEach(card => {
-  // 元の tags
-  (card.tags || []).forEach(t => tagSet.add(t));
+  cards.forEach(card => {
+    // 元の tags
+    (card.tags || []).forEach(t => tagSet.add(t));
 
-  // レア度タグ
-  if (card.rarity) tagSet.add(`レア度:${card.rarity}`);
+    // レア度タグ
+    if (card.rarity) tagSet.add(`レア度:${card.rarity}`);
 
-  // コストタグ
-  if (card.cost !== undefined) tagSet.add(`コスト:${card.cost}`);
+    // コストタグ
+    if (card.cost !== undefined) tagSet.add(`コスト:${card.cost}`);
 
-  // 強化後コストタグ
-  if (card.upgradecost !== undefined) tagSet.add(`強化後コスト:${card.upgradecost}`);
-});
+    // 強化後コストタグ
+    if (card.upgradecost !== undefined) tagSet.add(`強化後コスト:${card.upgradecost}`);
+  });
 
-// あいうえお順ソート
-const allTags = Array.from(tagSet).sort((a, b) => a.localeCompare(b, 'ja'));
-
+  const allTags = Array.from(tagSet).sort((a, b) => a.localeCompare(b, 'ja'));
 
   /* ▼ タグボタンを生成 ▼ */
   allTags.forEach(tag => {
@@ -370,7 +361,22 @@ const allTags = Array.from(tagSet).sort((a, b) => a.localeCompare(b, 'ja'));
     tagToggleArrow.textContent = isOpen ? '▼' : '▲';
   });
 
-  /* ▼ タグボタンクリック処理（AND 条件） ▼ */
+  /* ▼ AND / OR 切り替えボタン ▼ */
+  document.getElementById("modeAnd").addEventListener("click", () => {
+    tagMode = "AND";
+    document.getElementById("modeAnd").classList.add("active");
+    document.getElementById("modeOr").classList.remove("active");
+    render();
+  });
+
+  document.getElementById("modeOr").addEventListener("click", () => {
+    tagMode = "OR";
+    document.getElementById("modeOr").classList.add("active");
+    document.getElementById("modeAnd").classList.remove("active");
+    render();
+  });
+
+  /* ▼ タグボタンクリック処理（AND / OR 共通） ▼ */
   tagButtonsContainer.querySelectorAll('button').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation(); // 親の開閉クリックを拾わないように
@@ -438,26 +444,23 @@ const allTags = Array.from(tagSet).sort((a, b) => a.localeCompare(b, 'ja'));
       }
     }
 
-/* ▼ タグ AND フィルタ ▼ */
-/* ▼ タグフィルタ（AND / OR 切り替え対応） ▼ */
-if (selectedTags.length > 0) {
-  filtered = filtered.filter(card => {
-    const cardTagList = [
-      ...(card.tags || []),
-      `レア度:${card.rarity}`,
-      `コスト:${card.cost}`,
-      `強化後コスト:${card.upgradecost}`
-    ];
+    /* ▼ タグフィルタ（AND / OR 切り替え対応） ▼ */
+    if (selectedTags.length > 0) {
+      filtered = filtered.filter(card => {
+        const cardTagList = [
+          ...(card.tags || []),
+          `レア度:${card.rarity}`,
+          `コスト:${card.cost}`,
+          `強化後コスト:${card.upgradecost}`
+        ];
 
-    if (tagMode === "AND") {
-      return selectedTags.every(tag => cardTagList.includes(tag));
-    } else {
-      return selectedTags.some(tag => cardTagList.includes(tag));
+        if (tagMode === "AND") {
+          return selectedTags.every(tag => cardTagList.includes(tag));
+        } else {
+          return selectedTags.some(tag => cardTagList.includes(tag));
+        }
+      });
     }
-  });
-}
-
-
 
     /* ▼ 検索 ▼ */
     const keyword = search.value.toLowerCase();
