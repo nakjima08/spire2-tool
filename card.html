@@ -7,17 +7,18 @@
 
   <style>
     /* ▼ 左上の最終更新日時 ▼ */
-    #lastUpdate {
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      color: #cccccc;
-      font-size: 14px;
-      background: rgba(0,0,0,0.4);
-      padding: 4px 8px;
-      border-radius: 4px;
-      z-index: 9999;
-    }
+#lastUpdate {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  color: #cccccc;
+  font-size: 14px;
+  background: rgba(0,0,0,0.4);
+  padding: 4px 8px;
+  border-radius: 4px;
+  z-index: 9999;
+}
+
 
     body {
       font-family: Arial, sans-serif;
@@ -176,24 +177,34 @@
 <script>
 /* ▼ 最終更新日時 ▼ */
 async function showLastUpdate() {
-  const res = await fetch('cards.json', { method: 'HEAD' });
-  const last = res.headers.get('Last-Modified');
+  async function getLastModified(url) {
+    const res = await fetch(url, { method: 'HEAD' });
+    const last = res.headers.get('Last-Modified');
+    return last ? new Date(last) : null;
+  }
 
-  if (last) {
-    const date = new Date(last);
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, "0");
-    const d = String(date.getDate()).padStart(2, "0");
-    const h = String(date.getHours()).padStart(2, "0");
-    const min = String(date.getMinutes()).padStart(2, "0");
+  const htmlDate = await getLastModified('card.html');
+  const jsonDate = await getLastModified('cards.json');
+
+  // どちらか新しい方を採用
+  const latest = (htmlDate && jsonDate)
+    ? (htmlDate > jsonDate ? htmlDate : jsonDate)
+    : (htmlDate || jsonDate);
+
+  if (latest) {
+    const y = latest.getFullYear();
+    const m = String(latest.getMonth() + 1).padStart(2, "0");
+    const d = String(latest.getDate()).padStart(2, "0");
+    const h = String(latest.getHours()).padStart(2, "0");
+    const min = String(latest.getMinutes()).padStart(2, "0");
 
     document.getElementById("lastUpdate").textContent =
       `最終更新：${y}/${m}/${d} ${h}:${min}`;
   }
 }
+
 showLastUpdate();
-
-
+  
 /* ▼ カード読み込み ▼ */
 async function loadCards() {
   const response = await fetch('cards.json?cache=' + Date.now());
