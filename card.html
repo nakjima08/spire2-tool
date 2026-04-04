@@ -411,24 +411,45 @@ async function loadCards() {
     });
   });
   /* ▼ ソート関数（レア度 → コスト → 名前） */
-  function sortCards(data) {
-    const rarityOrder = { "レア": 1, "アンコモン": 2, "コモン": 3 };
+function sortCards(data, mode) {
+  const rarityOrder = { "レア": 1, "アンコモン": 2, "コモン": 3 };
+  const rankOrder = { "S": 1, "A": 2, "B": 3, "C": 4, "D": 5, "E": 6 };
 
-    return data.sort((a, b) => {
-      // レア度
-      if (rarityOrder[a.rarity] !== rarityOrder[b.rarity]) {
+  return data.sort((a, b) => {
+    switch (mode) {
+      case "rarity-asc":
         return rarityOrder[a.rarity] - rarityOrder[b.rarity];
-      }
+      case "rarity-desc":
+        return rarityOrder[b.rarity] - rarityOrder[a.rarity];
 
-      // コスト
-      if (a.cost !== b.cost) {
+      case "cost-asc":
         return a.cost - b.cost;
-      }
+      case "cost-desc":
+        return b.cost - a.cost;
 
-      // 名前（日本語対応）
-      return a.name.localeCompare(b.name, "ja");
-    });
-  }
+      case "ucost-asc":
+        return a.upgradecost - b.upgradecost;
+      case "ucost-desc":
+        return b.upgradecost - a.upgradecost;
+
+      case "rank-asc":
+        return rankOrder[a.valuation] - rankOrder[b.valuation];
+      case "rank-desc":
+        return rankOrder[b.valuation] - rankOrder[a.valuation];
+
+      default:
+        // デフォルトは「レア度 → コスト → 名前」
+        if (rarityOrder[a.rarity] !== rarityOrder[b.rarity]) {
+          return rarityOrder[a.rarity] - rarityOrder[b.rarity];
+        }
+        if (a.cost !== b.cost) {
+          return a.cost - b.cost;
+        }
+        return a.name.localeCompare(b.name, "ja");
+    }
+  });
+}
+
 
   /* ▼ メイン描画処理 */
   function render() {
@@ -477,8 +498,9 @@ async function loadCards() {
       );
     }
 
-    /* ▼ ★ ソート（ここが重要） ★ */
-    filtered = sortCards(filtered);
+/* ▼ ★ ソート（ここが重要） ★ */
+filtered = sortCards(filtered, sortSelect.value);
+
 
     /* ▼ カード描画 */
     filtered.forEach(card => {
