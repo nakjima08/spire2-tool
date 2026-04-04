@@ -14,6 +14,7 @@
     }
 
     body {
+      <div id="lastUpdate"></div>
       font-family: Arial, sans-serif;
       background: #1a1a1a;
       color: #f0f0f0;
@@ -25,6 +26,17 @@
       text-align: center;
       margin-bottom: 20px;
     }
+#lastUpdate {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  color: #cccccc;
+  font-size: 14px;
+  background: rgba(0,0,0,0.4);
+  padding: 4px 8px;
+  border-radius: 4px;
+  z-index: 9999;
+}
 
     #search {
       width: 100%;
@@ -120,6 +132,19 @@ async function loadCards() {
   const cards = await response.json();
   const list = document.getElementById('cardList');
   const search = document.getElementById('search');
+function showLastUpdate() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  const h = String(now.getHours()).padStart(2, "0");
+  const min = String(now.getMinutes()).padStart(2, "0");
+
+  document.getElementById("lastUpdate").textContent =
+    `最終更新：${y}/${m}/${d} ${h}:${min}`;
+}
+
+showLastUpdate();
 
   function render(filter = "") {
     list.innerHTML = "";
