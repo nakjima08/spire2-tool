@@ -9,7 +9,6 @@
     "synergy": ["ストライク",],
     "評価": "E",
     "tags": ["アタック","初期カード"],
-    "image": "images/strike.png"
   },
   {
     "name": "防御",
@@ -21,7 +20,6 @@
     "synergy": ["防御"],
     "評価": "C",
     "tags": ["ブロック","初期カード"],
-    "image": "images/defense.png"
   },
   {
     "name": "バッシュ",
@@ -33,7 +31,6 @@
     "synergy": ["弱体","デバフ","高コスト"],
     "評価": "B",
     "tags": ["アタック","弱体","デバフ","アイアンクラッド初期カード"],
-    "image": "images/bash.png"
   },
   {
     "name": "怒り",
@@ -45,7 +42,6 @@
     "synergy": ["0コスト","複製"],
     "評価": "B",
     "tags": ["アタック","0コスト","複製"],
-    "image": "images/anger.png"
   },
   {
     "name": "アイアンウェーブ",
@@ -57,7 +53,6 @@
     "synergy": [""],
     "評価": "B",
     "tags": ["アタック","ブロック"],
-    "image": "images/ironwave.png"
   },
   {
     "name": "サンダークラップ",
@@ -69,7 +64,6 @@
     "synergy": ["弱体","デバフ","AOE"],
     "評価": "B",
     "tags": ["アタック","弱体","デバフ","AOE"],
-    "image": "images/thunderclap.png"
   },
   {
     "name": "セットアップストライク",
@@ -81,7 +75,6 @@
     "synergy": ["筋力","バフ","連撃"],
     "評価": "A",
     "tags": ["アタック","筋力","バフ"],
-    "image": "images/SetupStrike.png"
   },
   {
     "name": "ソードブーメラン",
@@ -93,7 +86,6 @@
     "synergy": ["連撃","筋力"],
     "評価": "B",
     "tags": ["アタック","連撃"],
-    "image": "images/bash.png"
   },
   {
     "name": "ツインストライク",
@@ -105,7 +97,6 @@
     "synergy": ["連撃","筋力","ストライク"],
     "評価": "B",
     "tags": ["アタック","連撃"],
-    "image": "images/TwinStrike.png"
   },
   {
     "name": "ヘッドバット",
@@ -117,6 +108,5 @@
     "synergy": ["トップ操作","捨て札"],
     "評価": "A",
     "tags": ["アタック","トップ操作","捨て札"],
-    "image": "images/headbutt.png"
   },
 ]
