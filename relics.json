@@ -1,0 +1,14 @@
+[
+  {
+    "name": "Burning Blood",
+    "rarity": "初期",
+    "effect": "戦闘終了時にHPを6回復する",
+    "synergy": ["耐久", "長期戦"]
+  },
+  {
+    "name": "Snecko Eye",
+    "rarity": "レア",
+    "effect": "カードのコストをランダム化。毎ターン2ドロー",
+    "synergy": ["高コスト", "ドロー", "ランダム"]
+  }
+]
