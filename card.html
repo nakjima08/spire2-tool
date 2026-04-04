@@ -6,6 +6,21 @@
   <title>カード図鑑</title>
 
   <style>
+    .mode-btn {
+  padding: 4px 10px;
+  background: #333;
+  color: #fff;
+  border: 1px solid #666;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-right: 6px;
+}
+
+.mode-btn.active {
+  background: #1e90ff;
+  border-color: #63b3ff;
+}
+
     /* ▼ 左上の最終更新日時 ▼ */
     #lastUpdate {
       position: absolute;
@@ -222,7 +237,11 @@
   <div class="tab" data-filter="ディフェクト専用">ディフェクト</div>
   <div class="tab" data-filter="common">共通</div>
 </div>
-
+<!-- ▼ AND / OR 切り替え -->
+<div id="tagModeSwitch" style="margin-bottom: 8px; font-size: 14px;">
+  <button id="modeAnd" class="mode-btn active">AND</button>
+  <button id="modeOr" class="mode-btn">OR</button>
+</div>
 <!-- ▼ タグフィルタ（自動生成） ▼ -->
 <div class="tag-filter-wrapper">
   <div class="tag-filter-header" id="tagFilterHeader">
@@ -280,7 +299,20 @@ async function showLastUpdate() {
 showLastUpdate();
 
 /* ▼ カード読み込み ▼ */
-async function loadCards() {
+async function loadCards(document.getElementById("modeAnd").addEventListener("click", () => {
+  tagMode = "AND";
+  document.getElementById("modeAnd").classList.add("active");
+  document.getElementById("modeOr").classList.remove("active");
+  render();
+});
+
+document.getElementById("modeOr").addEventListener("click", () => {
+  tagMode = "OR";
+  document.getElementById("modeOr").classList.add("active");
+  document.getElementById("modeAnd").classList.remove("active");
+  render();
+});
+) {
   const response = await fetch('cards.json?cache=' + Date.now());
   let cards = await response.json();
 
@@ -296,6 +328,8 @@ async function loadCards() {
 
   let currentFilter = "all";
   let selectedTags = [];
+  let tagMode = "AND"; // OR に切り替え可能
+
 
   const rarityOrder = { "コモン": 1, "アンコモン": 2, "レア": 3 };
   const rankOrder = { "S": 1, "A": 2, "B": 3, "C": 4, "D": 5, "E": 6 };
@@ -405,9 +439,9 @@ const allTags = Array.from(tagSet).sort((a, b) => a.localeCompare(b, 'ja'));
     }
 
 /* ▼ タグ AND フィルタ ▼ */
+/* ▼ タグフィルタ（AND / OR 切り替え対応） ▼ */
 if (selectedTags.length > 0) {
   filtered = filtered.filter(card => {
-    // カードの全タグを合成
     const cardTagList = [
       ...(card.tags || []),
       `レア度:${card.rarity}`,
@@ -415,10 +449,14 @@ if (selectedTags.length > 0) {
       `強化後コスト:${card.upgradecost}`
     ];
 
-    // AND 条件
-    return selectedTags.every(tag => cardTagList.includes(tag));
+    if (tagMode === "AND") {
+      return selectedTags.every(tag => cardTagList.includes(tag));
+    } else {
+      return selectedTags.some(tag => cardTagList.includes(tag));
+    }
   });
 }
+
 
 
     /* ▼ 検索 ▼ */
