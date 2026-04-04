@@ -58,12 +58,16 @@ async function loadCards() {
         const div = document.createElement('div');
         div.className = "card";
         div.innerHTML = `
-          <strong>${card.name}</strong><br>
-          タイプ：${card.type}<br>
-          コスト：${card.cost}<br>
-          シナジー：${card.synergy.join(", ")}<br>
-          ランク：${card.valuation}
-        `;
+  <strong>${card.name}</strong><br>
+  タイプ：${card.type}<br>
+  コスト：${card.cost}<br>
+  レア度：${card.rarity}<br>
+  効果：${card.effect}<br>
+  強化後：${card.upgradeEffect}<br>
+  シナジー：${card.synergy.join(", ")}<br>
+  タグ：${card.tags.join(", ")}<br>
+  ランク：${card.valuation}
+`;
         list.appendChild(div);
       });
   }
