@@ -7,19 +7,17 @@
 
   <style>
     /* ▼ 左上の最終更新日時 ▼ */
-#lastUpdate {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  color: #cccccc;
-  font-size: 14px;
-  background: rgba(0,0,0,0.4);
-  padding: 4px 8px;
-  border-radius: 4px;
-  z-index: 9999;
-}
-
-
+    #lastUpdate {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: #cccccc;
+      font-size: 14px;
+      background: rgba(0,0,0,0.4);
+      padding: 4px 8px;
+      border-radius: 4px;
+      z-index: 10;
+    }
 
     body {
       font-family: Arial, sans-serif;
@@ -63,6 +61,72 @@
       background: #555;
       font-weight: bold;
       border: 2px solid #888;
+    }
+
+    /* ▼ タグフィルタ ▼ */
+    .tag-filter-wrapper {
+      margin-bottom: 10px;
+      border-radius: 8px;
+      background: #222;
+      padding: 8px 10px;
+    }
+
+    .tag-filter-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .tag-filter-header span {
+      font-size: 14px;
+      color: #ddd;
+    }
+
+    .tag-toggle-arrow {
+      font-size: 14px;
+      margin-left: 8px;
+    }
+
+    .tag-buttons {
+      margin-top: 8px;
+      display: none;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .tag-buttons.open {
+      display: flex;
+    }
+
+    .tag-buttons button {
+      padding: 4px 10px;
+      background: #333;
+      color: #fff;
+      border: 1px solid #666;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .tag-buttons button.active {
+      background: #1e90ff;
+      border-color: #63b3ff;
+    }
+
+    .selected-tags {
+      margin-top: 6px;
+      font-size: 13px;
+      color: #ccc;
+    }
+
+    .selected-tags span {
+      display: inline-block;
+      margin-right: 6px;
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: #444;
     }
 
     /* ▼ カード一覧をグリッド化 ▼ */
@@ -159,6 +223,16 @@
   <div class="tab" data-filter="common">共通</div>
 </div>
 
+<!-- ▼ タグフィルタ（自動生成） ▼ -->
+<div class="tag-filter-wrapper">
+  <div class="tag-filter-header" id="tagFilterHeader">
+    <span>タグフィルタ</span>
+    <span class="tag-toggle-arrow" id="tagToggleArrow">▼</span>
+  </div>
+  <div id="tagButtons" class="tag-buttons"></div>
+  <div class="selected-tags" id="selectedTagsView"></div>
+</div>
+
 <input type="text" id="search" placeholder="カード名・タイプ・シナジーで検索">
 
 <select id="sortSelect">
@@ -175,8 +249,9 @@
 </select>
 
 <div id="cardList"></div>
+
 <script>
-/* ▼ 最終更新日時 ▼ */
+/* ▼ 最終更新日時（card.html / cards.json の新しい方） ▼ */
 async function showLastUpdate() {
   async function getLastModified(url) {
     const res = await fetch(url, { method: 'HEAD' });
@@ -187,7 +262,6 @@ async function showLastUpdate() {
   const htmlDate = await getLastModified('card.html');
   const jsonDate = await getLastModified('cards.json');
 
-  // どちらか新しい方を採用
   const latest = (htmlDate && jsonDate)
     ? (htmlDate > jsonDate ? htmlDate : jsonDate)
     : (htmlDate || jsonDate);
@@ -203,9 +277,8 @@ async function showLastUpdate() {
       `最終更新：${y}/${m}/${d} ${h}:${min}`;
   }
 }
-
 showLastUpdate();
-  
+
 /* ▼ カード読み込み ▼ */
 async function loadCards() {
   const response = await fetch('cards.json?cache=' + Date.now());
@@ -216,10 +289,67 @@ async function loadCards() {
   const sortSelect = document.getElementById('sortSelect');
   const tabs = document.querySelectorAll('.tab');
 
+  const tagButtonsContainer = document.getElementById('tagButtons');
+  const selectedTagsView = document.getElementById('selectedTagsView');
+  const tagFilterHeader = document.getElementById('tagFilterHeader');
+  const tagToggleArrow = document.getElementById('tagToggleArrow');
+
   let currentFilter = "all";
+  let selectedTags = [];
 
   const rarityOrder = { "コモン": 1, "アンコモン": 2, "レア": 3 };
   const rankOrder = { "S": 1, "A": 2, "B": 3, "C": 4, "D": 5, "E": 6 };
+
+  /* ▼ タグ一覧を cards.json から自動生成 ▼ */
+  const tagSet = new Set();
+  cards.forEach(card => {
+    (card.tags || []).forEach(t => tagSet.add(t));
+  });
+
+  const allTags = Array.from(tagSet).sort((a, b) => a.localeCompare(b, 'ja'));
+
+  /* ▼ タグボタンを生成 ▼ */
+  allTags.forEach(tag => {
+    const btn = document.createElement('button');
+    btn.textContent = tag;
+    btn.dataset.tag = tag;
+    tagButtonsContainer.appendChild(btn);
+  });
+
+  /* ▼ タグエリアの開閉 ▼ */
+  tagFilterHeader.addEventListener('click', () => {
+    const isOpen = tagButtonsContainer.classList.contains('open');
+    tagButtonsContainer.classList.toggle('open');
+    tagToggleArrow.textContent = isOpen ? '▼' : '▲';
+  });
+
+  /* ▼ タグボタンクリック処理（AND 条件） ▼ */
+  tagButtonsContainer.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation(); // 親の開閉クリックを拾わないように
+      const tag = btn.dataset.tag;
+
+      if (selectedTags.includes(tag)) {
+        selectedTags = selectedTags.filter(t => t !== tag);
+        btn.classList.remove('active');
+      } else {
+        selectedTags.push(tag);
+        btn.classList.add('active');
+      }
+
+      updateSelectedTagsView();
+      render();
+    });
+  });
+
+  function updateSelectedTagsView() {
+    if (selectedTags.length === 0) {
+      selectedTagsView.textContent = '';
+      return;
+    }
+    selectedTagsView.innerHTML = '選択中タグ：' +
+      selectedTags.map(t => `<span>${t}</span>`).join('');
+  }
 
   function sortCards(data) {
     const mode = sortSelect.value;
@@ -261,11 +391,20 @@ async function loadCards() {
       }
     }
 
+    /* ▼ タグ AND フィルタ ▼ */
+    if (selectedTags.length > 0) {
+      filtered = filtered.filter(card =>
+        selectedTags.every(tag => (card.tags || []).includes(tag))
+      );
+    }
+
     /* ▼ 検索 ▼ */
     const keyword = search.value.toLowerCase();
-    filtered = filtered.filter(c =>
-      JSON.stringify(c).toLowerCase().includes(keyword)
-    );
+    if (keyword) {
+      filtered = filtered.filter(c =>
+        JSON.stringify(c).toLowerCase().includes(keyword)
+      );
+    }
 
     /* ▼ ソート ▼ */
     filtered = sortCards(filtered);
@@ -275,7 +414,7 @@ async function loadCards() {
       const div = document.createElement('div');
       div.className = "card";
 
-      /* ▼ レア度枠線クラス付与（重要） ▼ */
+      /* ▼ レア度枠線クラス付与 ▼ */
       if (card.rarity === "レア") div.classList.add("rare");
       else if (card.rarity === "アンコモン") div.classList.add("uncommon");
       else div.classList.add("common");
