@@ -229,7 +229,9 @@
 <div id="tagModeSwitch">
   <button id="modeAnd" class="mode-btn active">AND</button>
   <button id="modeOr" class="mode-btn">OR</button>
+  <button id="tagClear" class="mode-btn" style="background:#552222;">クリア</button>
 </div>
+
 
 <div class="tag-filter-wrapper">
   <div class="tag-filter-header" id="tagFilterHeader">
@@ -340,6 +342,21 @@ async function loadCards() {
     document.getElementById("modeAnd").classList.remove("active");
     render();
   });
+  
+  /* ▼ タグ選択クリア ▼ */
+document.getElementById("tagClear").addEventListener("click", () => {
+  selectedTags = [];
+
+  // ボタンの active を全部解除
+  tagButtonsContainer.querySelectorAll("button").forEach(btn => {
+    btn.classList.remove("active");
+  });
+
+  // 選択中タグ表示を消す
+  selectedTagsView.textContent = "";
+
+  render();
+});
 
   tagButtonsContainer.querySelectorAll('button').forEach(btn => {
     btn.addEventListener('click', (e) => {
