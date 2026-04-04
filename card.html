@@ -404,10 +404,11 @@ document.getElementById("tagClear").addEventListener("click", () => {
     });
   });
 
- function sortCards(data) {
+function sortCards(data) {
+  const rarityOrder = { "レア": 1, "アンコモン": 2, "コモン": 3 };
+
   return data.sort((a, b) => {
     // ① レア度
-    const rarityOrder = { "レア": 1, "アンコモン": 2, "コモン": 3 };
     if (rarityOrder[a.rarity] !== rarityOrder[b.rarity]) {
       return rarityOrder[a.rarity] - rarityOrder[b.rarity];
     }
@@ -417,112 +418,73 @@ document.getElementById("tagClear").addEventListener("click", () => {
       return a.cost - b.cost;
     }
 
-    // ③ 名前（日本語混ざってもOK）
+    // ③ 名前（漢字混ざってもOK）
     return a.name.localeCompare(b.name, "ja");
   });
 }
 
 
   function render() {
-    list.innerHTML = "";
-    let filtered = cards;
+  list.innerHTML = "";
 
-    if (selectedTabFilters.length > 0) {
-      filtered = filtered.filter(card => {
-        if (selectedTabFilters.includes("common")) {
-          const isCommon =
-            !card.tags.includes("アイアンクラッド専用") &&
-            !card.tags.includes("サイレント専用") &&
-            !card.tags.includes("リージェント専用") &&
-            !card.tags.includes("ネクロバインダー専用") &&
-            !card.tags.includes("ディフェクト専用");
-          if (isCommon) return true;
-        }
-        return selectedTabFilters.some(f => card.tags.includes(f));
-      });
-    }
+  let filtered = cards;
 
-    if (selectedTags.length > 0) {
-      filtered = filtered.filter(card => {
-        const cardTagList = [
-          ...(card.tags || []),
-          `レア度:${card.rarity}`,
-          `コスト:${card.cost}`,
-          `強化後コスト:${card.upgradecost}`
-        ];
-        if (tagMode === "AND") {
-          return selectedTags.every(tag => cardTagList.includes(tag));
-        } else {
-          return selectedTags.some(tag => cardTagList.includes(tag));
-        }
-      });
-    }
-
-    const keyword = search.value.toLowerCase();
-    if (keyword) {
-      filtered = filtered.filter(c =>
-        JSON.stringify(c).toLowerCase().includes(keyword)
-      );
-    }
-
-    filtered = sortCards(filtered);
-
-    filtered.forEach(card => {
-      const div = document.createElement('div');
-      div.className = "card";
-
-      if (card.rarity === "レア") div.classList.add("rare");
-      else if (card.rarity === "アンコモン") div.classList.add("uncommon");
-      else div.classList.add("common");
-
-      if (card.tags.includes("アイアンクラッド専用")) div.classList.add("ironclad");
-      else if (card.tags.includes("サイレント専用")) div.classList.add("silent");
-      else if (card.tags.includes("リージェント専用")) div.classList.add("regent");
-      else if (card.tags.includes("ネクロバインダー専用")) div.classList.add("necrobinder");
-      else if (card.tags.includes("ディフェクト専用")) div.classList.add("defect");
-      else div.classList.add("colorless");
-
-      let rarityClass = "rarity-common";
-      if (card.rarity === "レア") rarityClass = "rarity-rare";
-      else if (card.rarity === "アンコモン") rarityClass = "rarity-uncommon";
-
-      let typeIcon = "❓";
-      if (card.type === "アタック") typeIcon = "⚔";
-      else if (card.type === "スキル") typeIcon = "📘";
-      else if (card.type === "パワー") typeIcon = "💪";
-
-      div.innerHTML = `
-        <strong><span class="type-icon">${typeIcon}</span>${card.name}</strong><br>
-        タイプ：${card.type}<br>
-        レア度：<span class="${rarityClass}">${card.rarity}</span><br>
-
-        <div class="toggle-box">
-          <span class="toggle-arrow">▼</span>コスト：${card.cost}
-          <div class="toggle-content">強化後コスト：${card.upgradecost}</div>
-        </div>
-
-        <div class="toggle-box">
-          <span class="toggle-arrow">▼</span>効果：${card.effect}
-          <div class="toggle-content">強化後：${card.upgradeEffect}</div>
-        </div>
-
-        シナジー：${(card.synergy || []).join(", ")}<br>
-        ランク：${card.valuation}
-      `;
-
-      div.querySelectorAll(".toggle-box").forEach(box => {
-        const arrow = box.querySelector(".toggle-arrow");
-        const content = box.querySelector(".toggle-content");
-        box.addEventListener("click", () => {
-          const isOpen = content.classList.contains("open");
-          content.classList.toggle("open");
-          arrow.textContent = isOpen ? "▼" : "▲";
-        });
-      });
-
-      list.appendChild(div);
+  /* ▼ タブ OR フィルタ */
+  if (selectedTabFilters.length > 0) {
+    filtered = filtered.filter(card => {
+      if (selectedTabFilters.includes("common")) {
+        const isCommon =
+          !card.tags.includes("アイアンクラッド専用") &&
+          !card.tags.includes("サイレント専用") &&
+          !card.tags.includes("リージェント専用") &&
+          !card.tags.includes("ネクロバインダー専用") &&
+          !card.tags.includes("ディフェクト専用");
+        if (isCommon) return true;
+      }
+      return selectedTabFilters.some(f => card.tags.includes(f));
     });
   }
+
+  /* ▼ タグフィルタ（AND / OR） */
+  if (selectedTags.length > 0) {
+    filtered = filtered.filter(card => {
+      const cardTagList = [
+        ...(card.tags || []),
+        `レア度:${card.rarity}`,
+        `コスト:${card.cost}`,
+        `強化後コスト:${card.upgradecost}`
+      ];
+
+      if (tagMode === "AND") {
+        return selectedTags.every(tag => cardTagList.includes(tag));
+      } else {
+        return selectedTags.some(tag => cardTagList.includes(tag));
+      }
+    });
+  }
+
+  /* ▼ 検索 */
+  const keyword = search.value.toLowerCase();
+  if (keyword) {
+    filtered = filtered.filter(c =>
+      JSON.stringify(c).toLowerCase().includes(keyword)
+    );
+  }
+
+  /* ▼ ★ここにソートを置く（重要）★ */
+  filtered = sortCards(filtered);
+
+  /* ▼ カード描画 */
+  filtered.forEach(card => {
+    const div = document.createElement('div');
+    div.className = "card";
+
+    // …（カードのHTML生成処理）…
+
+    list.appendChild(div);
+  });
+}
+
 
   search.addEventListener('input', render);
   sortSelect.addEventListener('change', render);
