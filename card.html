@@ -4,13 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>カード図鑑</title>
+
   <style>
-    /* すでにあるCSSの下に追加してOK */
+    /* ▼ タイプアイコン ▼ */
     .type-icon {
-    font-size: 20px;
-    margin-right: 6px;
-    vertical-align: middle;
-  }
+      font-size: 20px;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
     body {
       font-family: Arial, sans-serif;
       background: #1a1a1a;
@@ -18,10 +20,12 @@
       margin: 0;
       padding: 20px;
     }
+
     h1 {
       text-align: center;
       margin-bottom: 20px;
     }
+
     #search {
       width: 100%;
       padding: 10px;
@@ -31,15 +35,23 @@
       margin-bottom: 20px;
     }
 
+    /* ▼ カード一覧をグリッド化 ▼ */
+    #cardList {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 15px;
+    }
+
     /* ▼ カード基本デザイン ▼ */
     .card {
       background: #2f3542;
       padding: 15px;
       border-radius: 8px;
-      margin-bottom: 10px;
-      border: 3px solid transparent; /* ここは残すが、後で上書き可能にする */
+      border: 3px solid transparent;
       color: #ffffff;
+      height: 100%;
     }
+
     .card strong {
       font-size: 18px;
     }
@@ -52,38 +64,32 @@
     .card.defect { background: #1ea7d9; }
     .card.colorless { background: #555555; }
 
-/* ▼ レア度枠線（必ず .card より後ろに書く） ▼ */
-.card.rare {
-  border: 3px solid #ffd700 !important; /* 金 */
-}
-.card.uncommon {
-  border: 3px solid #1ec8ff !important; /* 水色 */
-}
-.card.common {
-  border: 3px solid transparent !important; /* なし */
-}
-/* ▲ レア度枠線 ▲ */
+    /* ▼ レア度枠線 ▼ */
+    .card.rare { border: 3px solid #ffd700 !important; }
+    .card.uncommon { border: 3px solid #1ec8ff !important; }
+    .card.common { border: 3px solid transparent !important; }
 
-    /* ▼ レア度文字色（親の color を上書きするため強めに指定） ▼ */
-    .rarity-rare {
-      color: #ffd700 !important;
-      font-weight: bold;
-    }
-    .rarity-uncommon {
-      color: #1ec8ff !important;
-      font-weight: bold;
-    }
-    .rarity-common {
-      color: #cccccc !important;
-    }
-    #cardList {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 15px;
-}
+    /* ▼ レア度文字色 ▼ */
+    .rarity-rare { color: #ffd700 !important; font-weight: bold; }
+    .rarity-uncommon { color: #1ec8ff !important; font-weight: bold; }
+    .rarity-common { color: #cccccc !important; }
 
+    /* ▼ 効果折りたたみ ▼ */
+    .effect-box {
+      cursor: pointer;
+      padding: 5px 0;
+    }
+
+    .effect-upgrade {
+      display: none;
+      margin-top: 4px;
+      padding-left: 10px;
+      color: #ffd24d;
+      font-size: 14px;
+    }
   </style>
 </head>
+
 <body>
 
 <h1>📘 カード図鑑</h1>
@@ -101,49 +107,64 @@ async function loadCards() {
 
   function render(filter = "") {
     list.innerHTML = "";
+
     cards
-  .filter(c => JSON.stringify(c).toLowerCase().includes(filter.toLowerCase()))
-  .forEach(card => {
-    const div = document.createElement('div');
-    div.className = "card";
+      .filter(c => JSON.stringify(c).toLowerCase().includes(filter.toLowerCase()))
+      .forEach(card => {
 
-    /* ▼ キャラ専用背景色 ▼ */
-    if (card.tags.includes("アイアンクラッド専用")) div.classList.add("ironclad");
-    else if (card.tags.includes("サイレント専用")) div.classList.add("silent");
-    else if (card.tags.includes("リージェント専用")) div.classList.add("regent");
-    else if (card.tags.includes("ネクロバインダー専用")) div.classList.add("necrobinder");
-    else if (card.tags.includes("ディフェクト専用")) div.classList.add("defect");
-    else div.classList.add("colorless");
+        const div = document.createElement('div');
+        div.className = "card";
 
-    /* ▼ レア度枠線 ▼ */
-    if (card.rarity === "レア") div.classList.add("rare");
-    else if (card.rarity === "アンコモン") div.classList.add("uncommon");
-    else div.classList.add("common");
+        /* ▼ キャラ専用背景色 ▼ */
+        if (card.tags.includes("アイアンクラッド専用")) div.classList.add("ironclad");
+        else if (card.tags.includes("サイレント専用")) div.classList.add("silent");
+        else if (card.tags.includes("リージェント専用")) div.classList.add("regent");
+        else if (card.tags.includes("ネクロバインダー専用")) div.classList.add("necrobinder");
+        else if (card.tags.includes("ディフェクト専用")) div.classList.add("defect");
+        else div.classList.add("colorless");
 
-    /* ▼ レア度文字色クラス ▼ */
-    let rarityClass = "rarity-common";
-    if (card.rarity === "レア") rarityClass = "rarity-rare";
-    else if (card.rarity === "アンコモン") rarityClass = "rarity-uncommon";
+        /* ▼ レア度枠線 ▼ */
+        if (card.rarity === "レア") div.classList.add("rare");
+        else if (card.rarity === "アンコモン") div.classList.add("uncommon");
+        else div.classList.add("common");
 
-    /* ▼ タイプアイコン ▼ */
-    let typeIcon = "❓";
-    if (card.type === "アタック") typeIcon = "⚔";
-    else if (card.type === "スキル") typeIcon = "📘";
-    else if (card.type === "パワー") typeIcon = "💪";
+        /* ▼ レア度文字色 ▼ */
+        let rarityClass = "rarity-common";
+        if (card.rarity === "レア") rarityClass = "rarity-rare";
+        else if (card.rarity === "アンコモン") rarityClass = "rarity-uncommon";
 
-    div.innerHTML = `
-      <strong><span class="type-icon">${typeIcon}</span>${card.name}</strong><br>
-      タイプ：${card.type}<br>
-      コスト：${card.cost}<br>
-      レア度：<span class="${rarityClass}">${card.rarity}</span><br>
-      効果：${card.effect}<br>
-      強化後：${card.upgradeEffect}<br>
-      シナジー：${card.synergy.join(", ")}<br>
-      ランク：${card.valuation}
-    `;
-    list.appendChild(div);
-  });
+        /* ▼ タイプアイコン ▼ */
+        let typeIcon = "❓";
+        if (card.type === "アタック") typeIcon = "⚔";
+        else if (card.type === "スキル") typeIcon = "📘";
+        else if (card.type === "パワー") typeIcon = "💪";
 
+        /* ▼ HTML本体 ▼ */
+        div.innerHTML = `
+          <strong><span class="type-icon">${typeIcon}</span>${card.name}</strong><br>
+          タイプ：${card.type}<br>
+          コスト：${card.cost}<br>
+          レア度：<span class="${rarityClass}">${card.rarity}</span><br>
+
+          <div class="effect-box">
+            効果：${card.effect}
+            <div class="effect-upgrade">強化後：${card.upgradeEffect}</div>
+          </div>
+
+          シナジー：${card.synergy.join(", ")}<br>
+          ランク：${card.valuation}
+        `;
+
+        /* ▼ 効果折りたたみ動作 ▼ */
+        const effectBox = div.querySelector(".effect-box");
+        const upgrade = div.querySelector(".effect-upgrade");
+
+        effectBox.addEventListener("click", () => {
+          upgrade.style.display = upgrade.style.display === "none" ? "block" : "none";
+        });
+
+        list.appendChild(div);
+      });
   }
 
   search.addEventListener('input', () => render(search.value));
