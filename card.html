@@ -6,7 +6,6 @@
   <title>カード図鑑</title>
 
   <style>
-    /* ▼ 左上の最終更新日時 ▼ */
     #lastUpdate {
       position: absolute;
       top: 10px;
@@ -41,7 +40,6 @@
       margin-bottom: 15px;
     }
 
-    /* ▼ タブUI ▼ */
     .tabs {
       display: flex;
       gap: 10px;
@@ -63,7 +61,6 @@
       border: 2px solid #888;
     }
 
-    /* ▼ AND / OR 切り替え ▼ */
     #tagModeSwitch {
       margin-bottom: 8px;
       font-size: 14px;
@@ -84,7 +81,6 @@
       border-color: #63b3ff;
     }
 
-    /* ▼ タグフィルタ ▼ */
     .tag-filter-wrapper {
       margin-bottom: 10px;
       border-radius: 8px;
@@ -98,11 +94,6 @@
       justify-content: space-between;
       cursor: pointer;
       user-select: none;
-    }
-
-    .tag-filter-header span {
-      font-size: 14px;
-      color: #ddd;
     }
 
     .tag-toggle-arrow {
@@ -150,14 +141,12 @@
       background: #444;
     }
 
-    /* ▼ カード一覧をグリッド化 ▼ */
     #cardList {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
       gap: 15px;
     }
 
-    /* ▼ カード基本デザイン（枠線復活のため border を初期設定） ▼ */
     .card {
       background: #2f3542;
       padding: 15px;
@@ -174,25 +163,21 @@
       vertical-align: middle;
     }
 
-    /* ▼ キャラ専用背景色 ▼ */
     .card.ironclad { background: #8b1e1e; }
     .card.silent { background: #1e8b3a; }
     .card.regent { background: #d97a1e; }
     .card.necrobinder { background: #6a1e8b; }
     .card.defect { background: #1ea7d9; }
 
-    /* ▼ 共通カード（枠線を壊さない） ▼ */
     .card.colorless {
       background: #555555;
       border: 3px solid transparent !important;
     }
 
-    /* ▼ レア度文字色 ▼ */
     .rarity-rare { color: #ffd700 !important; font-weight: bold; }
     .rarity-uncommon { color: #1ec8ff !important; font-weight: bold; }
     .rarity-common { color: #cccccc !important; }
 
-    /* ▼ 折りたたみ ▼ */
     .toggle-box {
       cursor: pointer;
       padding: 5px 0;
@@ -220,7 +205,6 @@
       opacity: 1;
     }
 
-    /* ▼ レア度枠線（最優先で適用） ▼ */
     .card.rare { border-color: #ffd700 !important; }
     .card.uncommon { border-color: #1ec8ff !important; }
     .card.common { border-color: #888888 !important; }
@@ -228,12 +212,10 @@
 </head>
 
 <body>
-
 <div id="lastUpdate"></div>
 
 <h1>📘 カード図鑑</h1>
 
-<!-- ▼ タブUI ▼ -->
 <div class="tabs">
   <div class="tab active" data-filter="all">全カード</div>
   <div class="tab" data-filter="アイアンクラッド専用">アイアンクラッド</div>
@@ -244,13 +226,11 @@
   <div class="tab" data-filter="common">共通</div>
 </div>
 
-<!-- ▼ AND / OR 切り替え -->
 <div id="tagModeSwitch">
   <button id="modeAnd" class="mode-btn active">AND</button>
   <button id="modeOr" class="mode-btn">OR</button>
 </div>
 
-<!-- ▼ タグフィルタ（自動生成） ▼ -->
 <div class="tag-filter-wrapper">
   <div class="tag-filter-header" id="tagFilterHeader">
     <span>タグフィルタ</span>
@@ -276,8 +256,8 @@
 </select>
 
 <div id="cardList"></div>
+
 <script>
-/* ▼ 最終更新日時（card.html / cards.json の新しい方） ▼ */
 async function showLastUpdate() {
   async function getLastModified(url) {
     const res = await fetch(url, { method: 'HEAD' });
@@ -298,14 +278,12 @@ async function showLastUpdate() {
     const d = String(latest.getDate()).padStart(2, "0");
     const h = String(latest.getHours()).padStart(2, "0");
     const min = String(latest.getMinutes()).padStart(2, "0");
-
     document.getElementById("lastUpdate").textContent =
       `最終更新：${y}/${m}/${d} ${h}:${min}`;
   }
 }
 showLastUpdate();
 
-/* ▼ カード読み込み ▼ */
 async function loadCards() {
   const response = await fetch('cards.json?cache=' + Date.now());
   let cards = await response.json();
@@ -320,33 +298,22 @@ async function loadCards() {
   const tagFilterHeader = document.getElementById('tagFilterHeader');
   const tagToggleArrow = document.getElementById('tagToggleArrow');
 
-  let currentFilter = "all";
+  let selectedTabFilters = [];
   let selectedTags = [];
-  let tagMode = "AND"; // AND / OR 切り替え
+  let tagMode = "AND";
 
   const rarityOrder = { "コモン": 1, "アンコモン": 2, "レア": 3 };
   const rankOrder = { "S": 1, "A": 2, "B": 3, "C": 4, "D": 5, "E": 6 };
 
-  /* ▼ タグ一覧を cards.json から自動生成（レア度・コストも含む） ▼ */
   const tagSet = new Set();
-
   cards.forEach(card => {
-    // 元の tags
     (card.tags || []).forEach(t => tagSet.add(t));
-
-    // レア度タグ
     if (card.rarity) tagSet.add(`レア度:${card.rarity}`);
-
-    // コストタグ
     if (card.cost !== undefined) tagSet.add(`コスト:${card.cost}`);
-
-    // 強化後コストタグ
     if (card.upgradecost !== undefined) tagSet.add(`強化後コスト:${card.upgradecost}`);
   });
-
   const allTags = Array.from(tagSet).sort((a, b) => a.localeCompare(b, 'ja'));
 
-  /* ▼ タグボタンを生成 ▼ */
   allTags.forEach(tag => {
     const btn = document.createElement('button');
     btn.textContent = tag;
@@ -354,14 +321,12 @@ async function loadCards() {
     tagButtonsContainer.appendChild(btn);
   });
 
-  /* ▼ タグエリアの開閉 ▼ */
   tagFilterHeader.addEventListener('click', () => {
     const isOpen = tagButtonsContainer.classList.contains('open');
     tagButtonsContainer.classList.toggle('open');
     tagToggleArrow.textContent = isOpen ? '▼' : '▲';
   });
 
-  /* ▼ AND / OR 切り替えボタン ▼ */
   document.getElementById("modeAnd").addEventListener("click", () => {
     tagMode = "AND";
     document.getElementById("modeAnd").classList.add("active");
@@ -376,12 +341,10 @@ async function loadCards() {
     render();
   });
 
-  /* ▼ タグボタンクリック処理（AND / OR 共通） ▼ */
   tagButtonsContainer.querySelectorAll('button').forEach(btn => {
     btn.addEventListener('click', (e) => {
-      e.stopPropagation(); // 親の開閉クリックを拾わないように
+      e.stopPropagation();
       const tag = btn.dataset.tag;
-
       if (selectedTags.includes(tag)) {
         selectedTags = selectedTags.filter(t => t !== tag);
         btn.classList.remove('active');
@@ -389,7 +352,6 @@ async function loadCards() {
         selectedTags.push(tag);
         btn.classList.add('active');
       }
-
       updateSelectedTagsView();
       render();
     });
@@ -400,13 +362,35 @@ async function loadCards() {
       selectedTagsView.textContent = '';
       return;
     }
-    selectedTagsView.innerHTML = '選択中タグ：' +
-      selectedTags.map(t => `<span>${t}</span>`).join('');
+    selectedTagsView.innerHTML =
+      '選択中タグ：' + selectedTags.map(t => `<span>${t}</span>`).join('');
   }
+
+  tabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+      const filter = tab.dataset.filter;
+      if (filter === "all") {
+        selectedTabFilters = [];
+        tabs.forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+      } else {
+        const isActive = tab.classList.contains("active");
+        if (isActive) {
+          tab.classList.remove("active");
+          selectedTabFilters = selectedTabFilters.filter(f => f !== filter);
+        } else {
+          tab.classList.add("active");
+          selectedTabFilters.push(filter);
+          const allTab = document.querySelector('.tab[data-filter="all"]');
+          allTab.classList.remove("active");
+        }
+      }
+      render();
+    });
+  });
 
   function sortCards(data) {
     const mode = sortSelect.value;
-
     return data.sort((a, b) => {
       switch (mode) {
         case "name-asc": return a.name.localeCompare(b.name, "ja");
@@ -426,25 +410,23 @@ async function loadCards() {
 
   function render() {
     list.innerHTML = "";
-
     let filtered = cards;
 
-    /* ▼ タブフィルタ ▼ */
-    if (currentFilter !== "all") {
-      if (currentFilter === "common") {
-        filtered = filtered.filter(c =>
-          !c.tags.includes("アイアンクラッド専用") &&
-          !c.tags.includes("サイレント専用") &&
-          !c.tags.includes("リージェント専用") &&
-          !c.tags.includes("ネクロバインダー専用") &&
-          !c.tags.includes("ディフェクト専用")
-        );
-      } else {
-        filtered = filtered.filter(c => c.tags.includes(currentFilter));
-      }
+    if (selectedTabFilters.length > 0) {
+      filtered = filtered.filter(card => {
+        if (selectedTabFilters.includes("common")) {
+          const isCommon =
+            !card.tags.includes("アイアンクラッド専用") &&
+            !card.tags.includes("サイレント専用") &&
+            !card.tags.includes("リージェント専用") &&
+            !card.tags.includes("ネクロバインダー専用") &&
+            !card.tags.includes("ディフェクト専用");
+          if (isCommon) return true;
+        }
+        return selectedTabFilters.some(f => card.tags.includes(f));
+      });
     }
 
-    /* ▼ タグフィルタ（AND / OR 切り替え対応） ▼ */
     if (selectedTags.length > 0) {
       filtered = filtered.filter(card => {
         const cardTagList = [
@@ -453,7 +435,6 @@ async function loadCards() {
           `コスト:${card.cost}`,
           `強化後コスト:${card.upgradecost}`
         ];
-
         if (tagMode === "AND") {
           return selectedTags.every(tag => cardTagList.includes(tag));
         } else {
@@ -462,7 +443,6 @@ async function loadCards() {
       });
     }
 
-    /* ▼ 検索 ▼ */
     const keyword = search.value.toLowerCase();
     if (keyword) {
       filtered = filtered.filter(c =>
@@ -470,20 +450,16 @@ async function loadCards() {
       );
     }
 
-    /* ▼ ソート ▼ */
     filtered = sortCards(filtered);
 
-    /* ▼ カード描画 ▼ */
     filtered.forEach(card => {
       const div = document.createElement('div');
       div.className = "card";
 
-      /* ▼ レア度枠線クラス付与 ▼ */
       if (card.rarity === "レア") div.classList.add("rare");
       else if (card.rarity === "アンコモン") div.classList.add("uncommon");
       else div.classList.add("common");
 
-      /* ▼ キャラ専用背景色 ▼ */
       if (card.tags.includes("アイアンクラッド専用")) div.classList.add("ironclad");
       else if (card.tags.includes("サイレント専用")) div.classList.add("silent");
       else if (card.tags.includes("リージェント専用")) div.classList.add("regent");
@@ -515,14 +491,13 @@ async function loadCards() {
           <div class="toggle-content">強化後：${card.upgradeEffect}</div>
         </div>
 
-        シナジー：${card.synergy.join(", ")}<br>
+        シナジー：${(card.synergy || []).join(", ")}<br>
         ランク：${card.valuation}
       `;
 
       div.querySelectorAll(".toggle-box").forEach(box => {
         const arrow = box.querySelector(".toggle-arrow");
         const content = box.querySelector(".toggle-content");
-
         box.addEventListener("click", () => {
           const isOpen = content.classList.contains("open");
           content.classList.toggle("open");
@@ -533,16 +508,6 @@ async function loadCards() {
       list.appendChild(div);
     });
   }
-
-  /* ▼ タブクリック処理 ▼ */
-  tabs.forEach(tab => {
-    tab.addEventListener("click", () => {
-      tabs.forEach(t => t.classList.remove("active"));
-      tab.classList.add("active");
-      currentFilter = tab.dataset.filter;
-      render();
-    });
-  });
 
   search.addEventListener('input', render);
   sortSelect.addEventListener('change', render);
