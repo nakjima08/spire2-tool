@@ -70,11 +70,13 @@
       gap: 15px;
     }
 
-    /* ▼ カード基本デザイン ▼ */
+    /* ▼ カード基本デザイン（枠線復活のため border を初期設定） ▼ */
     .card {
       background: #2f3542;
       padding: 15px;
       border-radius: 8px;
+      border: 3px solid transparent; /* ← これが重要 */
+      box-sizing: border-box;
       color: #ffffff;
       height: 100%;
     }
@@ -126,44 +128,14 @@
       opacity: 1;
     }
 
-    /* ▼ ★ 枠線（最優先で適用されるよう style の一番下に配置） ▼ */
-    .card.rare { border: 3px solid #ffd700 !important; box-sizing: border-box; }
-    .card.uncommon { border: 3px solid #1ec8ff !important; box-sizing: border-box; }
-    .card.common { border: 3px solid #888888 !important; box-sizing: border-box; }
+    /* ▼ レア度枠線（最優先で適用） ▼ */
+    .card.rare { border-color: #ffd700 !important; }
+    .card.uncommon { border-color: #1ec8ff !important; }
+    .card.common { border-color: #888888 !important; }
   </style>
 </head>
 
 <body>
-
-<div id="lastUpdate"></div>
-
-<h1>📘 カード図鑑</h1>
-
-<!-- ▼ タブUI ▼ -->
-<div class="tabs">
-  <div class="tab active" data-filter="all">全カード</div>
-  <div class="tab" data-filter="アイアンクラッド専用">アイアンクラッド</div>
-  <div class="tab" data-filter="サイレント専用">サイレント</div>
-  <div class="tab" data-filter="リージェント専用">リージェント</div>
-  <div class="tab" data-filter="ネクロバインダー専用">ネクロバインダー</div>
-  <div class="tab" data-filter="ディフェクト専用">ディフェクト</div>
-  <div class="tab" data-filter="common">共通</div>
-</div>
-
-<input type="text" id="search" placeholder="カード名・タイプ・シナジーで検索">
-
-<select id="sortSelect">
-  <option value="name-asc">あいうえお順（昇順）</option>
-  <option value="name-desc">あいうえお順（降順）</option>
-  <option value="rarity-asc">レア度（昇順）</option>
-  <option value="rarity-desc">レア度（降順）</option>
-  <option value="cost-asc">コスト（昇順）</option>
-  <option value="cost-desc">コスト（降順）</option>
-  <option value="ucost-asc">強化後コスト（昇順）</option>
-  <option value="ucost-desc">強化後コスト（降順）</option>
-  <option value="rank-asc">ランク（昇順）</option>
-  <option value="rank-desc">ランク（降順）</option>
-</select>
 
 <div id="cardList"></div>
 
