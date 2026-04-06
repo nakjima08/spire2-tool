@@ -381,7 +381,11 @@ async function loadCards() {
 
     // ▼ コストタグ
     tagSet.add(`コスト:${card.cost}`);
-    tagSet.add(`強化後コスト:${card.upgradecost}`);
+   // ▼ 強化後コストタグ（0 のみ残す）
+if (String(card.upgradecost) === "0") {
+  tagSet.add("強化後コスト:0");
+}
+
 
     // ▼ 自動タグ
     const autoTags = extractKeywords(card);
