@@ -259,8 +259,6 @@
   <option value="cost-desc">コスト（降順）</option>
   <option value="ucost-asc">強化後コスト（昇順）</option>
   <option value="ucost-desc">強化後コスト（降順）</option>
-  <option value="rank-asc">ランク（昇順）</option>
-  <option value="rank-desc">ランク（降順）</option>
 </select>
 
 <div id="cardList"></div>
@@ -359,7 +357,6 @@ async function loadCards() {
   let tagMode = "AND";
 
   const rarityOrder = { "レア": 1, "アンコモン": 2, "コモン": 3 };
-  const rankOrder = { "S": 1, "A": 2, "B": 3, "C": 4, "D": 5, "E": 6 };
 
   /* ================================
      ▼ タグ一覧の自動生成
@@ -368,8 +365,10 @@ async function loadCards() {
   const tagSet = new Set();
 
   cards.forEach(card => {
-    // ▼ 専用タグ（色分け用）
-    (card.tags || []).forEach(t => tagSet.add(t));
+    // ▼ 専用タグだけ残す
+    (card.tags || [])
+      .filter(t => t.includes("専用"))
+      .forEach(t => tagSet.add(t));
 
     // ▼ タイプタグ
     tagSet.add(`タイプ:${card.type}`);
@@ -487,11 +486,10 @@ async function loadCards() {
     });
   });
   /* ================================
-     ▼ ソート関数
+     ▼ ソート関数（ランク削除版）
   ================================= */
   function sortCards(data, mode) {
     const rarityOrder = { "レア": 1, "アンコモン": 2, "コモン": 3 };
-    const rankOrder = { "S": 1, "A": 2, "B": 3, "C": 4, "D": 5, "E": 6 };
 
     return data.sort((a, b) => {
       switch (mode) {
@@ -501,19 +499,14 @@ async function loadCards() {
           return rarityOrder[b.rarity] - rarityOrder[a.rarity];
 
         case "cost-asc":
-          return a.cost - b.cost;
+          return Number(a.cost) - Number(b.cost);
         case "cost-desc":
-          return b.cost - a.cost;
+          return Number(b.cost) - Number(a.cost);
 
         case "ucost-asc":
-          return a.upgradecost - b.upgradecost;
+          return Number(a.upgradecost) - Number(b.upgradecost);
         case "ucost-desc":
-          return b.upgradecost - a.upgradecost;
-
-        case "rank-asc":
-          return rankOrder[a.valuation] - rankOrder[b.valuation];
-        case "rank-desc":
-          return rankOrder[b.valuation] - rankOrder[a.valuation];
+          return Number(b.upgradecost) - Number(a.upgradecost);
 
         default:
           // デフォルト：レア度 → コスト → 名前
@@ -521,7 +514,7 @@ async function loadCards() {
             return rarityOrder[a.rarity] - rarityOrder[b.rarity];
           }
           if (a.cost !== b.cost) {
-            return a.cost - b.cost;
+            return Number(a.cost) - Number(b.cost);
           }
           return a.name.localeCompare(b.name, "ja");
       }
@@ -627,8 +620,7 @@ async function loadCards() {
           <div class="toggle-content">強化後：${card.upgradeEffect}</div>
         </div>
 
-        シナジー：${(card.synergy || []).join(", ")}<br>
-        ランク：${card.valuation}
+        シナジー：${(card.synergy || []).join(", ")}
       `;
 
       // 折りたたみ
