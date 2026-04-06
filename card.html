@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>カード図鑑</title>
+  <title>カード図鑑（自動タグ生成版）</title>
 
   <style>
     #lastUpdate {
@@ -223,7 +223,7 @@
 
 <div id="lastUpdate"></div>
 
-<h1>📘 カード図鑑</h1>
+<h1>📘 カード図鑑（自動タグ生成版）</h1>
 
 <div class="tabs">
   <div class="tab active" data-filter="all">全カード</div>
@@ -238,19 +238,19 @@
 <div id="tagModeSwitch">
   <button id="modeAnd" class="mode-btn active">AND</button>
   <button id="modeOr" class="mode-btn">OR</button>
-  <button id="tagClear" class="mode-btn">クリア</button>
+  <button id="tagClear" class="mode-btn">✕ クリア</button>
 </div>
 
 <div class="tag-filter-wrapper">
   <div class="tag-filter-header" id="tagFilterHeader">
-    <span>タグフィルタ</span>
+    <span>タグフィルタ（自動生成）</span>
     <span class="tag-toggle-arrow" id="tagToggleArrow">▼</span>
   </div>
   <div id="tagButtons" class="tag-buttons"></div>
   <div class="selected-tags" id="selectedTagsView"></div>
 </div>
 
-<input type="text" id="search" placeholder="キーワード検索">
+<input type="text" id="search" placeholder="カード名・効果・シナジーで検索">
 
 <select id="sortSelect">
   <option value="rarity-asc">レア度（昇順）</option>
@@ -265,6 +265,9 @@
 
 <div id="cardList"></div>
 <script>
+/* ================================
+   ▼ 最終更新日時の取得
+================================ */
 async function showLastUpdate() {
   async function getLastModified(url) {
     const res = await fetch(url, { method: 'HEAD' });
@@ -291,6 +294,52 @@ async function showLastUpdate() {
 }
 showLastUpdate();
 
+/* ================================
+   ▼ 自動タグ生成辞書（表示用）
+================================ */
+const displayKeywords = [
+  "ダメージ","弱体","ブロック","コピー","捨て札","すべて","筋力",
+  "～回与える","一番上","山札","引く","HP","廃棄","ストライク",
+  "エナジー","アップグレード","追加","X","脱力","減少","ターン",
+  "戦闘","俊敏","プレイ","手札","ランダム","攻撃","リーサル","毒",
+  "破滅","増加","失う","枚のカード","変化","天賦","アタック","集中",
+  "脆弱","できない"
+];
+
+/* ================================
+   ▼ 自動タグ生成辞書（検索用）
+================================ */
+const searchKeywords = [
+  "ダメージ","弱体","ブロック","コピー","捨て札","すべて","筋力",
+  "回与える","一番上","山札","引","HP","廃棄","ストライク",
+  "エナジー","アップグレード","追加","X","脱力","減少","ターン",
+  "戦闘","俊敏","プレイ","手札","ランダム","攻撃","リーサル","毒",
+  "破滅","増加","失","枚のカード","変化","天賦","アタック","集中",
+  "脆弱","できない"
+];
+
+/* ================================
+   ▼ 自動タグ抽出
+================================ */
+function extractKeywords(card) {
+  const text = `${card.effect} ${card.upgradeEffect}`;
+  const matched = [];
+
+  for (let i = 0; i < displayKeywords.length; i++) {
+    const display = displayKeywords[i];
+    const search = searchKeywords[i];
+
+    if (text.includes(search)) {
+      matched.push(display);
+    }
+  }
+
+  return matched;
+}
+
+/* ================================
+   ▼ カード読み込み
+================================ */
 async function loadCards() {
   const response = await fetch('cards.json?cache=' + Date.now());
   let cards = await response.json();
@@ -309,19 +358,33 @@ async function loadCards() {
   let selectedTags = [];
   let tagMode = "AND";
 
-  const rarityOrder = { "コモン": 1, "アンコモン": 2, "レア": 3 };
+  const rarityOrder = { "レア": 1, "アンコモン": 2, "コモン": 3 };
   const rankOrder = { "S": 1, "A": 2, "B": 3, "C": 4, "D": 5, "E": 6 };
 
-  /* ▼ タグ自動生成 */
+  /* ================================
+     ▼ タグ一覧の自動生成
+     （専用タグ + タイプ + コスト + 自動タグ）
+  ================================= */
   const tagSet = new Set();
-  cards.forEach(card => {
-    (card.tags || []).forEach(t => tagSet.add(t));
-    if (card.rarity) tagSet.add(`レア度:${card.rarity}`);
-    if (card.cost !== undefined) tagSet.add(`コスト:${card.cost}`);
-    if (card.upgradecost !== undefined) tagSet.add(`強化後コスト:${card.upgradecost}`);
-  });
-  const allTags = Array.from(tagSet).sort((a, b) => a.localeCompare(b, 'ja'));
 
+  cards.forEach(card => {
+    // ▼ 専用タグ（色分け用）
+    (card.tags || []).forEach(t => tagSet.add(t));
+
+    // ▼ タイプタグ
+    tagSet.add(`タイプ:${card.type}`);
+
+    // ▼ コストタグ
+    tagSet.add(`コスト:${card.cost}`);
+    tagSet.add(`強化後コスト:${card.upgradecost}`);
+
+    // ▼ 自動タグ
+    const autoTags = extractKeywords(card);
+    autoTags.forEach(t => tagSet.add(t));
+  });
+
+  // ▼ タグボタン生成
+  const allTags = Array.from(tagSet).sort((a, b) => a.localeCompare(b, 'ja'));
   allTags.forEach(tag => {
     const btn = document.createElement('button');
     btn.textContent = tag;
@@ -329,14 +392,18 @@ async function loadCards() {
     tagButtonsContainer.appendChild(btn);
   });
 
-  /* ▼ タグフィルタ開閉 */
+  /* ================================
+     ▼ タグフィルタ開閉
+  ================================= */
   tagFilterHeader.addEventListener('click', () => {
     const isOpen = tagButtonsContainer.classList.contains('open');
     tagButtonsContainer.classList.toggle('open');
     tagToggleArrow.textContent = isOpen ? '▼' : '▲';
   });
 
-  /* ▼ AND / OR */
+  /* ================================
+     ▼ AND / OR 切替
+  ================================= */
   document.getElementById("modeAnd").addEventListener("click", () => {
     tagMode = "AND";
     document.getElementById("modeAnd").classList.add("active");
@@ -351,7 +418,9 @@ async function loadCards() {
     render();
   });
 
-  /* ▼ タグクリア */
+  /* ================================
+     ▼ タグクリア
+  ================================= */
   document.getElementById("tagClear").addEventListener("click", () => {
     selectedTags = [];
     tagButtonsContainer.querySelectorAll("button").forEach(btn => {
@@ -361,11 +430,14 @@ async function loadCards() {
     render();
   });
 
-  /* ▼ タグ選択 */
+  /* ================================
+     ▼ タグ選択
+  ================================= */
   tagButtonsContainer.querySelectorAll('button').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const tag = btn.dataset.tag;
+
       if (selectedTags.includes(tag)) {
         selectedTags = selectedTags.filter(t => t !== tag);
         btn.classList.remove('active');
@@ -373,6 +445,7 @@ async function loadCards() {
         selectedTags.push(tag);
         btn.classList.add('active');
       }
+
       updateSelectedTagsView();
       render();
     });
@@ -387,10 +460,13 @@ async function loadCards() {
       '選択中タグ：' + selectedTags.map(t => `<span>${t}</span>`).join('');
   }
 
-  /* ▼ タブ OR フィルタ */
+  /* ================================
+     ▼ タブ（専用タグ OR）
+  ================================= */
   tabs.forEach(tab => {
     tab.addEventListener("click", () => {
       const filter = tab.dataset.filter;
+
       if (filter === "all") {
         selectedTabFilters = [];
         tabs.forEach(t => t.classList.remove("active"));
@@ -410,53 +486,56 @@ async function loadCards() {
       render();
     });
   });
-  /* ▼ ソート関数（レア度 → コスト → 名前） */
-function sortCards(data, mode) {
-  const rarityOrder = { "レア": 1, "アンコモン": 2, "コモン": 3 };
-  const rankOrder = { "S": 1, "A": 2, "B": 3, "C": 4, "D": 5, "E": 6 };
+  /* ================================
+     ▼ ソート関数
+  ================================= */
+  function sortCards(data, mode) {
+    const rarityOrder = { "レア": 1, "アンコモン": 2, "コモン": 3 };
+    const rankOrder = { "S": 1, "A": 2, "B": 3, "C": 4, "D": 5, "E": 6 };
 
-  return data.sort((a, b) => {
-    switch (mode) {
-      case "rarity-asc":
-        return rarityOrder[a.rarity] - rarityOrder[b.rarity];
-      case "rarity-desc":
-        return rarityOrder[b.rarity] - rarityOrder[a.rarity];
-
-      case "cost-asc":
-        return a.cost - b.cost;
-      case "cost-desc":
-        return b.cost - a.cost;
-
-      case "ucost-asc":
-        return a.upgradecost - b.upgradecost;
-      case "ucost-desc":
-        return b.upgradecost - a.upgradecost;
-
-      case "rank-asc":
-        return rankOrder[a.valuation] - rankOrder[b.valuation];
-      case "rank-desc":
-        return rankOrder[b.valuation] - rankOrder[a.valuation];
-
-      default:
-        // デフォルトは「レア度 → コスト → 名前」
-        if (rarityOrder[a.rarity] !== rarityOrder[b.rarity]) {
+    return data.sort((a, b) => {
+      switch (mode) {
+        case "rarity-asc":
           return rarityOrder[a.rarity] - rarityOrder[b.rarity];
-        }
-        if (a.cost !== b.cost) {
+        case "rarity-desc":
+          return rarityOrder[b.rarity] - rarityOrder[a.rarity];
+
+        case "cost-asc":
           return a.cost - b.cost;
-        }
-        return a.name.localeCompare(b.name, "ja");
-    }
-  });
-}
+        case "cost-desc":
+          return b.cost - a.cost;
 
+        case "ucost-asc":
+          return a.upgradecost - b.upgradecost;
+        case "ucost-desc":
+          return b.upgradecost - a.upgradecost;
 
-  /* ▼ メイン描画処理 */
+        case "rank-asc":
+          return rankOrder[a.valuation] - rankOrder[b.valuation];
+        case "rank-desc":
+          return rankOrder[b.valuation] - rankOrder[a.valuation];
+
+        default:
+          // デフォルト：レア度 → コスト → 名前
+          if (rarityOrder[a.rarity] !== rarityOrder[b.rarity]) {
+            return rarityOrder[a.rarity] - rarityOrder[b.rarity];
+          }
+          if (a.cost !== b.cost) {
+            return a.cost - b.cost;
+          }
+          return a.name.localeCompare(b.name, "ja");
+      }
+    });
+  }
+
+  /* ================================
+     ▼ メイン描画処理
+  ================================= */
   function render() {
     list.innerHTML = "";
     let filtered = cards;
 
-    /* ▼ タブ OR フィルタ */
+    /* ▼ タブ（専用タグ OR） */
     if (selectedTabFilters.length > 0) {
       filtered = filtered.filter(card => {
         if (selectedTabFilters.includes("common")) {
@@ -475,11 +554,14 @@ function sortCards(data, mode) {
     /* ▼ タグフィルタ（AND / OR） */
     if (selectedTags.length > 0) {
       filtered = filtered.filter(card => {
+        const autoTags = extractKeywords(card);
+
         const cardTagList = [
-          ...(card.tags || []),
-          `レア度:${card.rarity}`,
+          ...autoTags,
+          `タイプ:${card.type}`,
           `コスト:${card.cost}`,
-          `強化後コスト:${card.upgradecost}`
+          `強化後コスト:${card.upgradecost}`,
+          ...card.tags
         ];
 
         if (tagMode === "AND") {
@@ -490,7 +572,7 @@ function sortCards(data, mode) {
       });
     }
 
-    /* ▼ 検索 */
+    /* ▼ フリーテキスト検索 */
     const keyword = search.value.toLowerCase();
     if (keyword) {
       filtered = filtered.filter(c =>
@@ -498,9 +580,8 @@ function sortCards(data, mode) {
       );
     }
 
-/* ▼ ★ ソート（ここが重要） ★ */
-filtered = sortCards(filtered, sortSelect.value);
-
+    /* ▼ ソート */
+    filtered = sortCards(filtered, sortSelect.value);
 
     /* ▼ カード描画 */
     filtered.forEach(card => {
@@ -512,7 +593,7 @@ filtered = sortCards(filtered, sortSelect.value);
       else if (card.rarity === "アンコモン") div.classList.add("uncommon");
       else div.classList.add("common");
 
-      // 色分け
+      // 専用タグによる色分け
       if (card.tags.includes("アイアンクラッド専用")) div.classList.add("ironclad");
       else if (card.tags.includes("サイレント専用")) div.classList.add("silent");
       else if (card.tags.includes("リージェント専用")) div.classList.add("regent");
@@ -525,7 +606,7 @@ filtered = sortCards(filtered, sortSelect.value);
       if (card.rarity === "レア") rarityClass = "rarity-rare";
       else if (card.rarity === "アンコモン") rarityClass = "rarity-uncommon";
 
-      // アイコン
+      // タイプアイコン
       let typeIcon = "❓";
       if (card.type === "アタック") typeIcon = "⚔";
       else if (card.type === "スキル") typeIcon = "📘";
@@ -565,7 +646,9 @@ filtered = sortCards(filtered, sortSelect.value);
     });
   }
 
-  /* ▼ イベント登録 */
+  /* ================================
+     ▼ イベント登録
+  ================================= */
   search.addEventListener('input', render);
   sortSelect.addEventListener('change', render);
 
