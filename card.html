@@ -332,8 +332,14 @@ function extractKeywords(card) {
     }
   }
 
+  // ▼ 名前に「ストライク」が含まれていたらタグ追加
+  if (card.name.includes("ストライク")) {
+    matched.push("ストライク");
+  }
+
   return matched;
 }
+
 
 /* ================================
    ▼ カード読み込み
